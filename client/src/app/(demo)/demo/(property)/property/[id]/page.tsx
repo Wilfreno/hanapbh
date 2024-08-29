@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 export default function Page({ params }: { params: { id: string } }) {
   const [property, setProperty] = useState<Property>();
   const from = useSearchParams().get("f");
-  const [review_avg, setReviewAvg] = useState(0);
+  const [review_avg, setReviewAvg] = useState(3.5);
   const [response_status, setResponseStatus] =
     useState<ServerResponse["status"]>();
 
@@ -31,13 +31,13 @@ export default function Page({ params }: { params: { id: string } }) {
 
       const d = data as Property;
       setProperty(d);
-      setReviewAvg(
-        d?.reviews.length
-          ? d?.reviews
-              .map((review) => review.rate)
-              .reduce((latest, rate) => latest + rate) / d.reviews.length
-          : 0
-      );
+      // setReviewAvg(
+      //   d?.reviews.length
+      //     ? d?.reviews
+      //         .map((review) => review.rate)
+      //         .reduce((latest, rate) => latest + rate) / d.reviews.length
+      //     : 0
+      // );
     }
 
     getProperty();
@@ -48,29 +48,50 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <main className="relative w-screen py-12 px-10 space-y-8">
       <header className="flex items-start justify-between">
-        <div className="flex items-start space-x-10">
-          <span>
+        <div className="space-y-4">
+          <div>
             <h1 className="text-3xl font-bold">{property?.name}</h1>
             <h2 className="text-muted-foreground">
               {property?.address.vicinity}
             </h2>
-          </span>
-          {Array.from({
-            length: 5,
-          }).map((_, index) =>
-            Math.floor(review_avg) === index + 1 ? (
-              Math.floor(review_avg) !== review_avg ? (
-                <StarHalf key={index} className="fill-primary" />
-              ) : (
-                <Star key={index} className="fill-primary" />
-              )
-            ) : (
-              <Star
-                key={index}
-                className={cn(index + 1 < review_avg && "fill-primary")}
-              />
-            ) 
-          )}
+          </div>
+          <div className="flex items-center space-x-4 font-medium">
+            <div className="flex space-x-1">
+              {Array.from({
+                length: 5,
+              }).map((_, index) =>
+                Math.floor(review_avg) === index + 1 ? (
+                  Math.floor(review_avg) !== review_avg ? (
+                    <span className="relative">
+                      <StarHalf
+                        key={index}
+                        className="fill-primary h-5 w-auto stroke"
+                      />
+                      <Star
+                        key={index}
+                        className="absolute h-5 w-auto top-0 left-0"
+                      />
+                    </span>
+                  ) : (
+                    <Star key={index} className="fill-primary h-5 w-auto" />
+                  )
+                ) : (
+                  <Star
+                    key={index}
+                    className={cn(
+                      "h-5 w-auto  fill-muted",
+                      index + 1 < review_avg
+                        ? "fill-primary"
+                        : "stroke-muted-foreground"
+                    )}
+                  />
+                )
+              )}
+            </div>
+            <span className="flex items">
+              {review_avg} {"("} {property?.reviews.length} reviews {")"}
+            </span>
+          </div>
         </div>
         <div className="space-x-4">
           <Link href={from ? from : "/demo"}>

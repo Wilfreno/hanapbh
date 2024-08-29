@@ -14,7 +14,7 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Hanap BH",
   description:
-    "A website utilizing google maps api to locate your nearby boadring houses",
+    "A website utilizing google maps api to locate your nearby boarding houses",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextAuthSessionProvider>
             {children}
-            <Toaster position="top-center" richColors/>
+            <Toaster position="top-center" richColors />
           </NextAuthSessionProvider>
         </ThemeProvider>
       </body>
