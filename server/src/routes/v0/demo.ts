@@ -41,7 +41,7 @@ export default function demoV0Router(
         JSONResponse(
           "OK",
           "request successful",
-          properties
+          properties.length
             ? properties.map((l) => ({
                 ...exclude({ id: l._id, ...l.toJSON() }, ["_id"]),
                 distance: getDistance(

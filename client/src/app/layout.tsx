@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import NextAuthSessionProvider from "@/components/page/auth/NextAuthSessionProvider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import ReduxProvider from "@/components/ReduxProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -27,10 +28,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn("antialiased overflow-x-hidden", poppins.className)}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <NextAuthSessionProvider>
-            {children}
-            <Toaster position="top-center" richColors />
-          </NextAuthSessionProvider>
+          <ReduxProvider>
+            <NextAuthSessionProvider>
+              {children}
+              <Toaster position="top-center" richColors />
+            </NextAuthSessionProvider>
+          </ReduxProvider>
         </ThemeProvider>
       </body>
     </html>

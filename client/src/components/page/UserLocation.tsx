@@ -5,20 +5,26 @@ import React, { useEffect, useState } from "react";
 import { useToast } from "../ui/use-toast";
 import useHTTPRequest from "../hooks/useHTTPRequest";
 import { MapPinOff, MapPinX, MapPinXInside } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/lib/redux/store";
+import { setUserLocation } from "@/lib/redux/slices/user-location";
+
+type C = {
+  lat: number;
+  lng: number;
+} | null;
+type E = "LOCATION_NONE" | "OUT_OF_BOUND" | "PERMISSION_DENIED";
 
 export default function UserLocation({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [out_of_bound, setOutOfBound] = useState(false);
+  const [error, setError] = useState<E>();
+  const [coords, setCoords] = useState<C>(null);
 
-  const location = useSearchParams().get("location");
-  const lat = useSearchParams().get("lat");
-  const lng = useSearchParams().get("lng");
+  const dispatch = useDispatch<AppDispatch>();
 
-  const router = useRouter();
-  const pathname = usePathname();
   const { toast } = useToast();
   const http_request = useHTTPRequest();
 
@@ -27,27 +33,28 @@ export default function UserLocation({
       toast({
         description: "Location detector is not supported in your browser",
       });
-      router.replace(pathname + "?location=none");
+
+      setError("LOCATION_NONE");
+
       return;
     }
     function getPosition() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          router.replace(
-            pathname +
-              "?lng=" +
-              position.coords.longitude +
-              "&lat=" +
-              position.coords.latitude
+          console.log(position);
+          dispatch(
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude, 
+            })
           );
         },
         (error) => {
-          if (error.PERMISSION_DENIED)
-            router.replace(pathname + "?location=off");
+          if (error.PERMISSION_DENIED) setError("PERMISSION_DENIED");
         }
       );
     }
-    if (location !== "none") getPosition();
+    if (error !== "LOCATION_NONE") getPosition();
   }, []);
 
   // useEffect(() => {
@@ -68,40 +75,46 @@ export default function UserLocation({
   //   validateUserLocation();
   // }, [lat, lng]);
 
-  if (location === "off")
-    return (
-      <main className="my-auto grid place-content-center space-y-5">
-        <MapPinOff className="h-auto w-[5vw] stroke-2 stroke-white mx-auto fill-muted-foreground" />
-        <span className="text-lg text-muted-foreground text-center">
-          <p>Location access is denied</p>
-          <p>
-            To continue using this site please allow it to access your location
+  switch (error) {
+    case "PERMISSION_DENIED": {
+      return (
+        <main className="my-auto grid place-content-center space-y-5">
+          <MapPinOff className="h-auto w-[5vw] stroke-2 stroke-white mx-auto fill-muted-foreground" />
+          <span className="text-lg text-muted-foreground text-center">
+            <p>Location access is denied</p>
+            <p>
+              To continue using this site please allow it to access your
+              location
+            </p>
+          </span>
+        </main>
+      );
+    }
+    case "LOCATION_NONE": {
+      return (
+        <main className="my-auto grid place-content-center space-y-5">
+          <MapPinXInside className="h-auto w-[5vw] stroke-2 stroke-white mx-auto fill-muted-foreground" />
+          <p className="text-center text-lg text-muted-foreground">
+            Location detector is not supported in your browser no data will be
+            displayed
           </p>
-        </span>
-      </main>
-    );
-  if (location === "none")
-    return (
-      <main className="my-auto grid place-content-center space-y-5">
-        <MapPinXInside className="h-auto w-[5vw] stroke-2 stroke-white mx-auto fill-muted-foreground" />
-        <p className="text-center text-lg text-muted-foreground">
-          Location detector is not supported in your browser no data will be
-          displayed
-        </p>
-      </main>
-    );
-
-  if (out_of_bound)
-    return (
-      <main className="my-auto grid place-content-center space-y-5">
-        <MapPinX className="h-auto w-[5vw] stroke-2 stroke-white mx-auto fill-muted-foreground" />
-        <span className="text-center text-lg text-muted-foreground">
-          <p>
-            Looks like your trying to access the app outside the Philippines.
-          </p>
-          <p>Nothing wil be displayed but you can still use the search bar</p>
-        </span>
-      </main>
-    );
-  return children;
+        </main>
+      );
+    }
+    case "OUT_OF_BOUND": {
+      return (
+        <main className="my-auto grid place-content-center space-y-5">
+          <MapPinX className="h-auto w-[5vw] stroke-2 stroke-white mx-auto fill-muted-foreground" />
+          <span className="text-center text-lg text-muted-foreground">
+            <p>
+              Looks like your trying to access the app outside the Philippines.
+            </p>
+            <p>Nothing wil be displayed but you can still use the search bar</p>
+          </span>
+        </main>
+      );
+    }
+    default:
+      return children;
+  }
 }

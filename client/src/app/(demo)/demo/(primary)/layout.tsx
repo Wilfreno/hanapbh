@@ -1,5 +1,6 @@
 "use client";
 import Header from "@/components/page/layout/header/Header";
+import UserLocation from "@/components/page/UserLocation";
 import { usePathname } from "next/navigation";
 import React, { Suspense } from "react";
 
@@ -20,7 +21,7 @@ export default function Layout({
         pathname.startsWith("/demo/sign-up")
           ? auth
           : null}
-        {children}
+        <UserLocation>{children}</UserLocation>
       </div>
     </Suspense>
   );

@@ -164,28 +164,25 @@ export default function Page() {
     }
   }, [sort.distance]);
 
-  console.log(properties);
   return (
     <main className="grid grid-rows-[auto_1fr_auto] sm:px-[10vw] py-8 space-y-8 scroll-smooth">
       <div className="flex items-center mx-5 space-x-1">
         <ListFilter filter={filter} setFilter={setFilter} />
         <ListSort sort={sort} setSort={setSort} />
       </div>
-      <UserLocation>
-        <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
-          {loading.initial ? (
-            <LodgingCardsSkeleton />
-          ) : modified_list.length ? (
-            modified_list.map((property) => (
-              <PropertyCard key={property.name} property={property} />
-            ))
-          ) : (
-            properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))
-          )}
-        </section>
-      </UserLocation>
+      <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
+        {loading.initial ? (
+          <LodgingCardsSkeleton />
+        ) : modified_list.length ? (
+          modified_list.map((property) => (
+            <PropertyCard key={property.name} property={property} />
+          ))
+        ) : (
+          properties.map((property) => (
+            <PropertyCard key={property.id} property={property} />
+          ))
+        )}
+      </section>
       <Button
         className={cn(
           "w-fit justify-self-center rounded-full",

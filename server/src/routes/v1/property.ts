@@ -71,101 +71,100 @@ export default function property_v1_router(
       "latitude" | "longitude" | "page" | "max_distance",
       string
     >;
-  }>(
-    "/nearby",
-    async (request, reply) => {
-      try{
-        const { latitude, longitude } = request.query;
-        const { page, max_distance } = request.query;
+  }>("/nearby", async (request, reply) => {
+    try {
+      const { latitude, longitude } = request.query;
+      const { page, max_distance } = request.query;
 
-        if (!page || !max_distance)
-          return reply
-            .code(400)
-            .send(
-              JSONResponse(
-                "BAD_REQUEST",
-                "page and max_distance is required as a query parameters"
-              )
-            );
+      if (!page || !max_distance)
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "page and max_distance is required as a query parameters"
+            )
+          );
 
-        if (!Number(page) || !Number(max_distance))
-          return reply
-            .code(400)
-            .send(
-              JSONResponse(
-                "BAD_REQUEST",
-                "page and max_distance value must be a number"
-              )
-            );
+      if (!Number(page) || !Number(max_distance))
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "page and max_distance value must be a number"
+            )
+          );
 
-        const skip = 20 * (Number(page) - 1);
+      const skip = 20 * (Number(page) - 1);
 
-        const database_properties = (await Property.aggregate([
-          {
-            $geoNear: {
-              near: {
-                type: "Point",
-                coordinates: [Number(longitude), Number(latitude)],
-              },
-              distanceField: "distance",
-              maxDistance: Number(max_distance),
-              spherical: true,
+      const database_properties = (await Property.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [Number(longitude), Number(latitude)],
             },
+            distanceField: "distance",
+            maxDistance: Number(max_distance),
+            spherical: true,
           },
-          {
-            $skip: skip,
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: 20,
+        },
+        {
+          $lookup: {
+            from: "photos",
+            as: "photos",
+            localField: "photos",
+            foreignField: "_id",
           },
-          {
-            $limit: 20,
-          },
-          {
-            $lookup: {
-              from: "photos",
-              as: "photos",
-              localField: "photos",
-              foreignField: "_id",
-            },
-          },
-        ])) as
-          | (Document<unknown, {}, PropertyType> &
-              PropertyType & {
-                _id: Types.ObjectId;
-              })[]
-          | null;
+        },
+      ])) as
+        | (Document<unknown, {}, PropertyType> &
+            PropertyType & {
+              _id: Types.ObjectId;
+            })[]
+        | null;
 
-        
-        return reply.code(200).send(
-          JSONResponse(
-            "OK",
-            "request successful",
-            database_properties
-              ? database_properties.map((l) => ({
-                  ...exclude({ id: l._id, ...l }, ["_id"]),
-                  distance: getDistance(
-                    {
-                      latitude: Number(latitude),
-                      longitude: Number(longitude),
-                    },
-                    {
-                      latitude: l.location.coordinates[1],
-                      longitude: l.location.coordinates[0],
-                    }
-                  ),
-                }))
-              : []
-          )
-        );
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
-      }
+      return reply.code(200).send(
+        JSONResponse(
+          "OK",
+          "request successful",
+          database_properties
+            ? database_properties.map((l) => ({
+                ...exclude({ id: l._id, ...l }, ["_id"]),
+                distance: getDistance(
+                  {
+                    latitude: Number(latitude),
+                    longitude: Number(longitude),
+                  },
+                  {
+                    latitude: l.location.coordinates[1],
+                    longitude: l.location.coordinates[0],
+                  }
+                ),
+              }))
+            : []
+        )
+      );
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
     }
-  );
+  });
 
-  fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
+  fastify.get<{
+    Params: { id: string };
+    Querystring: Record<"longitude" | "latitude", string>;
+  }>("/:id", async (request, reply) => {
     try {
       const { id } = request.params;
-
+      const { longitude, latitude } = request.query;
       const found_property = await Property.findOne({
         _id: id,
       }).populate(["photos", "rooms", "reviews"]);
@@ -175,11 +174,18 @@ export default function property_v1_router(
           .code(404)
           .send(JSONResponse("NOT_FOUND", "property not found"));
 
-      return reply
-        .code(200)
-        .send(
-          JSONResponse("OK", "request successful", found_property.toJSON())
-        );
+      return reply.code(200).send(
+        JSONResponse("OK", "request successful", {
+          ...found_property.toJSON(),
+          distance: getDistance(
+            { latitude: Number(latitude), longitude: Number(longitude) },
+            {
+              longitude: found_property.location.coordinates[0],
+              latitude: found_property.location.coordinates[1],
+            }
+          ),
+        })
+      );
     } catch (error) {
       fastify.log.error(error);
       return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
