@@ -99,9 +99,12 @@ export default function Page({ params }: { params: { id: string } }) {
           </Link>
         </div>
       </header>
-      <div className="flex  justify-between">
-        <div>
-          <h1 className="font-2xl font-bold">Description</h1>
+      <div className="flex space-x-4 justify-between">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold">Description</h1>
+          <div className="prose text-primary text-medium">
+            <p>{property?.description}</p>
+          </div>
         </div>
         <div className="aspect-video w-auto h-[70dvh] overflow-hidden">
           <CustomImage

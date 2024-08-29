@@ -20,6 +20,7 @@
     "nodenext",
     "noreply",
     "sigstore",
+    "tailwindcss",
     "tsbuildinfo"
   ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",

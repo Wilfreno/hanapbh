@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import NextAuthSessionProvider from "@/components/page/auth/NextAuthSessionProvider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
-const manrope = Manrope({
+const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn("antialiased overflow-x-hidden", manrope.className)}>
+      <body className={cn("antialiased overflow-x-hidden", poppins.className)}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextAuthSessionProvider>
             {children}
