@@ -3,6 +3,7 @@
 import useHTTPRequest from "@/components/hooks/useHTTPRequest";
 import CustomImage from "@/components/page/CustomImage";
 import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@/lib/redux/store";
 import { Property } from "@/lib/types/data-type";
 import { ServerResponse } from "@/lib/types/server-response";
 import { cn } from "@/lib/utils";
@@ -31,17 +32,21 @@ import { useEffect, useState } from "react";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [property, setProperty] = useState<Property>();
-  const from = useSearchParams().get("f");
   const [review_avg, setReviewAvg] = useState(3.5);
   const [response_status, setResponseStatus] =
     useState<ServerResponse["status"]>();
 
+  const user_location = useAppSelector((state) => state.user_location);
+
+  const from = useSearchParams().get("f");
   const http_request = useHTTPRequest();
 
   useEffect(() => {
+    if (!user_location) return;
     async function getProperty() {
       const { data, status } = await http_request.GET(
-        "/v1/property/" + params.id
+        "/v1/property/" + params.id,
+        { latitude: user_location?.lat, longitude: user_location?.lng }
       );
 
       setResponseStatus(status);
@@ -59,7 +64,7 @@ export default function Page({ params }: { params: { id: string } }) {
     }
 
     getProperty();
-  }, []);
+  }, [user_location]);
 
   if (response_status !== "OK") return null;
   return (
@@ -199,8 +204,8 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             <h1 className="text-2xl font-bold">Distance from You</h1>
             <div className="flex items-center gap-2 text-primary">
-              <span> m</span>
               <MapPin className="h-6" />
+              <span>{property?.distance.toFixed(2)} meters</span>
             </div>
           </div>
         </div>
