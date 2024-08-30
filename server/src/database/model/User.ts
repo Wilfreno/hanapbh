@@ -15,6 +15,9 @@ export type UserType = {
   properties?: Types.ObjectId[];
   reviewed?: Types.ObjectId[];
   favorites?: Types.ObjectId[];
+  bio: string;
+  occupancies: Types.ObjectId[];
+  activities: { type: "FAVORITE"; content: Types.ObjectId }[];
   contact?: {
     phone_number: string;
     facebook: string;
@@ -39,6 +42,21 @@ const userSchema = new Schema<UserType>(
       type: String,
       required: true,
     },
+    bio: {
+      type: String,
+      default: "",
+    },
+    activities: [
+      {
+        type: {
+          default: [],
+        },
+        content: {
+          type: Schema.Types.ObjectId,
+          ref: "activities.type ",
+        },
+      },
+    ],
     email: {
       type: String,
       required: true,

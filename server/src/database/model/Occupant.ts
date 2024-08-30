@@ -5,7 +5,7 @@ export type OccupantType = {
   user: Types.ObjectId;
   status: "OCCUPYING" | "LEFT";
   joined: Date;
-  left: Date | "PRESENT";
+  left: Date;
 };
 
 const occupantSchema = new Schema<OccupantType>({
@@ -27,9 +27,8 @@ const occupantSchema = new Schema<OccupantType>({
     default: Date.now,
   },
   left: {
-    type: Date || String,
-    enum: ["PRESENT"],
-    default: "PRESENT",
+    type: Date,
+    default: null,
   },
 });
 
