@@ -21,7 +21,8 @@
     "noreply",
     "sigstore",
     "tailwindcss",
-    "tsbuildinfo"
+    "tsbuildinfo",
+    "Uploadthing"
   ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnPaste": true,
