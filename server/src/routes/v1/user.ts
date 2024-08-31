@@ -37,7 +37,7 @@ export default function userV1Router(
           password = await hash(user.password, 14);
         }
 
-        const new_user = new User<UserType>({
+        const new_user = new User({
           email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
@@ -95,6 +95,7 @@ export default function userV1Router(
         const found_user = await User.findOne({
           email: {
             $regex: "^" + email.toLowerCase(),
+            $options: "i",
           },
         }).populate("photo");
 
@@ -138,37 +139,60 @@ export default function userV1Router(
     }
   );
   //read route
-  fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    try {
-      const user_id = request.params.id;
+  fastify.get<{ Params: { user: string } }>(
+    "/:user",
+    async (request, reply) => {
+      try {
+        const user = request.params.user;
 
-      const found_user = await User.findOne({ _id: user_id })
-        .select("-password")
-        .populate("photo");
+        if (user[0] !== "@")
+          return reply
+            .code(400)
+            .send(
+              JSONResponse(
+                "BAD_REQUEST",
+                "request parameters should start with @"
+              )
+            );
 
-      if (!found_user)
+        const found_user = await User.findOne({
+          email: { $regex: "^" + user.substring(1).toLowerCase() },
+          $options: "i",
+        })
+          .select("-password")
+          .populate([
+            "photo",
+            "favorites",
+            "occupancies",
+            "properties",
+            "reviewed",
+            "activities",
+          ]);
+
+        if (!found_user)
+          return reply
+            .code(404)
+            .send(JSONResponse("NOT_FOUND", "user does not exist"));
+
         return reply
-          .code(404)
-          .send(JSONResponse("NOT_FOUND", "user does not exist"));
-
-      return reply
-        .code(200)
-        .send(
-          JSONResponse(
-            "OK",
-            "request successful",
-            exclude(found_user.toJSON(), ["password"])
-          )
-        );
-    } catch (error) {
-      fastify.log.error(error);
-      return reply
-        .code(500)
-        .send(
-          JSONResponse("INTERNAL_SERVER_ERROR", "oops! something went wrong")
-        );
+          .code(200)
+          .send(
+            JSONResponse(
+              "OK",
+              "request successful",
+              exclude(found_user.toJSON(), ["password"])
+            )
+          );
+      } catch (error) {
+        fastify.log.error(error);
+        return reply
+          .code(500)
+          .send(
+            JSONResponse("INTERNAL_SERVER_ERROR", "oops! something went wrong")
+          );
+      }
     }
-  });
+  );
   fastify.get<{ Params: { email: string } }>(
     "/email/:email",
     async (request, reply) => {

@@ -50,6 +50,9 @@ export type Property = {
     | "CCTV"
     | "PARKING_LOT"
   )[];
+  occupancies: Occupant[];
+  activities: Types.ObjectId[];
+
   location: {
     type: "Point";
     coordinates: [number, number];
@@ -90,4 +93,21 @@ export type Review = {
   comment: string;
   date_created: Date;
   last_updated: Date;
+};
+
+export type Occupant = {
+  room: Room;
+  user: User;
+  status: "OCCUPYING" | "LEFT";
+  joined: Date;
+  left: Date;
+};
+
+export type Activity = {
+  user: User;
+  type: "FAVORITE" | "REVIEW" | "OCCUPYING" | "LEFT";
+  favored?: Favorite;
+  reviewed?: Review;
+  occupancy?: Occupant;
+  date_created: Date;
 };
