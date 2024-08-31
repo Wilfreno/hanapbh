@@ -5,14 +5,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Dispatch,
-  FormEvent,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { User } from "@/lib/types/data-type";
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 import {
@@ -24,7 +17,7 @@ import useHTTPRequest from "@/components/hooks/useHTTPRequest";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import LoadingSvg from "@/components/svg/LoadingSvg";
 import { ChevronLeft } from "lucide-react";
 
@@ -49,6 +42,7 @@ export default function SignUpOTP({
   const submit_btn_ref = useRef<HTMLButtonElement>(null);
   const { toast } = useToast();
   const exit = useSearchParams().get("exit");
+  const router = useRouter();
 
   async function handleResend() {
     const id = setInterval(() => {
@@ -100,8 +94,7 @@ export default function SignUpOTP({
       const sign_in = await signIn("credentials", {
         email: form_data.email,
         password: form_data.password,
-        redirect: true,
-        callbackUrl: !exit ? "/" : exit === "null" ? "/" : exit,
+        redirect: false,
       });
 
       if (sign_in?.error) {
@@ -111,6 +104,9 @@ export default function SignUpOTP({
           action: <ToastAction altText="OK">OK</ToastAction>,
         });
       }
+      const callback_url = !exit ? "/" : exit === "null" ? "/" : exit;
+
+      router.push(callback_url + "?" + "new=1");
       setSubmit(false);
     } catch (error) {
       setSubmit(false);

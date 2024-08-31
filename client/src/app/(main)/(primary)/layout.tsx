@@ -1,5 +1,6 @@
 "use client";
 import Header from "@/components/page/layout/header/Header";
+import ProfileUpdate from "@/components/page/ProfileUpdate";
 import UserLocation from "@/components/page/UserLocation";
 import { usePathname } from "next/navigation";
 import React, { Suspense } from "react";
@@ -15,6 +16,7 @@ export default function Layout({
 
   return (
     <Suspense>
+      <ProfileUpdate />
       <div className="grid grid-rows-[auto_1fr] w-screen h-dvh overflow-x-hidden">
         <Header />
         {pathname.startsWith("/login") || pathname.startsWith("/sign-up")
