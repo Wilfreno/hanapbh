@@ -87,7 +87,7 @@ export default function ProfileUpdate() {
                 data: photo,
                 status,
                 message,
-              } = await http_request.POST("/v1/user/photo", {
+              } = await http_request.PATCH("/v1/user/photo", {
                 id: data?.user.id,
                 photo: { url: photo_url } satisfies Photo,
               });

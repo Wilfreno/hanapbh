@@ -11,7 +11,7 @@ export type UserType = {
     type: "MALE" | "FEMALE" | "OTHER";
     other: string;
   };
-  
+
   photo?: Types.ObjectId;
   properties?: Types.ObjectId[];
   reviewed?: Types.ObjectId[];
@@ -113,6 +113,7 @@ const userSchema = new Schema<UserType>(
     photo: {
       type: Schema.Types.ObjectId,
       ref: "Photo",
+      default: null,
     },
     favorites: [
       {
