@@ -70,20 +70,17 @@ export type Property = {
   reviews: Review[];
   rooms: Room[];
   date_created: Date;
-  last_updated: Date;
+  last_updated?: Date;
 };
 
 export type Photo = {
-  id: string;
   url: string;
-  type?: "PROFILE" | "LODGING" | "ROOM";
-  width: number;
-  height: number;
-  user?: string;
-  lodging?: string;
-  room?: string;
+  type?: "PROFILE" | "PROPERTY" | "ROOM";
+  user?: Types.ObjectId;
+  property?: Types.ObjectId;
+  room?: Types.ObjectId;
   date_created?: Date;
-  last_updated: Date;
+  last_updated?: Date;
 };
 
 export type Review = {
@@ -92,7 +89,7 @@ export type Review = {
   rate: number;
   comment: string;
   date_created: Date;
-  last_updated: Date;
+  last_updated?: Date;
 };
 
 export type Occupant = {
