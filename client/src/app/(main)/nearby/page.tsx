@@ -11,8 +11,7 @@ import ListSort from "@/components/page/ListSort";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import LoadingSvg from "@/components/svg/LoadingSvg";
-import PropertyLink from "@/components/page/nearby/PropertyLink";
-import { useSession } from "next-auth/react";
+
 
 export default function Page() {
   const [loading, setLoading] = useState({ initial: true, refetching: false });
@@ -31,8 +30,6 @@ export default function Page() {
 
   const http_request = useHTTPRequest();
 
-  const { data } = useSession();
-  console.log(data);
   async function getNearbyProperties() {
     try {
       const { data } = await http_request.GET("/v1/property/nearby", {

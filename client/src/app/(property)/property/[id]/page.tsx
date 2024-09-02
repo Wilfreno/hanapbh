@@ -44,7 +44,7 @@ export default function Page({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (!user_location) return;
     async function getProperty() {
-      const { data, status } = await http_request.GET(
+      const { data, status } = await http_request.GET<Property>(
         "/v1/property/" + params.id,
         { latitude: user_location?.lat, longitude: user_location?.lng }
       );
@@ -52,8 +52,7 @@ export default function Page({ params }: { params: { id: string } }) {
       setResponseStatus(status);
       if (status !== "OK") return;
 
-      const d = data as Property;
-      setProperty(d);
+      setProperty(data);
       // setReviewAvg(
       //   d?.reviews.length
       //     ? d?.reviews

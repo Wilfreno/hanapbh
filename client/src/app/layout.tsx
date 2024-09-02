@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ReduxProvider from "@/components/ReduxProvider";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
-import { ourFileRouter } from "./(api)/api/uploadthing/core";
+import { ourFileRouter } from "./api/uploadthing/core";
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],

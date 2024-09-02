@@ -1,6 +1,6 @@
 import { Property } from "./data-type";
 
-export type ServerResponse<T> = {
+export type ServerResponse<T = null> = {
   status:
     | "OK"
     | "UNAUTHORIZED"
@@ -13,7 +13,7 @@ export type ServerResponse<T> = {
     | "OUT_OF_BOUND";
 
   message: string;
-  data: T; 
+  data: T;
 };
 
 export type GOOGLENearbyPropertyResponse = {
