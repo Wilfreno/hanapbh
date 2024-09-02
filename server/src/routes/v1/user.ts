@@ -328,7 +328,7 @@ export default function userV1Router(
       id: string;
       photo: PhotoType;
     };
-  }>("/key", async (request, reply) => {
+  }>("/:key", async (request, reply) => {
     try {
       const { key } = request.params;
       const {
@@ -345,20 +345,21 @@ export default function userV1Router(
         pin,
       } = request.body;
 
-      if (!id)
+      if (!id) {
         return reply
           .code(400)
           .send(
             JSONResponse("BAD_REQUEST", "id is required on the request body")
           );
+      }
 
       const found_user = await User.findOne({ _id: id });
 
-      if (!found_user)
+      if (!found_user) {
         return reply
           .code(404)
           .send(JSONResponse("NOT_FOUND", "user not found"));
-
+      }
       switch (key) {
         case "email": {
           if (!email)
@@ -541,7 +542,13 @@ export default function userV1Router(
                 )
               );
 
-          const new_photo = new Photo(photo);
+          const new_photo = new Photo({
+            user: found_user._id,
+            url: photo.url,
+            type: "PROFILE",
+          });
+
+          await new_photo.save();
           await User.updateOne(
             { _id: id },
             { $set: { photo: new_photo, last_updated: new Date() } }
@@ -560,13 +567,19 @@ export default function userV1Router(
             );
       }
 
-      const new_user = User.findOne({ _id: id })
+      const new_user = await User.findOne({ _id: id })
         .select("-password")
-        .populate("photos");
+        .populate("photo");
 
       return reply
         .code(200)
-        .send(JSONResponse("OK", "user " + key + "has been updated", new_user));
+        .send(
+          JSONResponse(
+            "OK",
+            "user " + key + " has been updated",
+            new_user!.toJSON()
+          )
+        );
     } catch (error) {
       fastify.log.error(error);
       return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));

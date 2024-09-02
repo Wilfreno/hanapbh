@@ -2,7 +2,8 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { AuthOptions } from "next-auth";
 import { ServerResponse } from "./types/server-response";
-import { User } from "./types/data-type";
+import { Photo, User } from "./types/data-type";
+import { GETRequest, POSTRequest } from "./server/fetch";
 
 const google_client_id = process.env.GOOGLE_CLIENT_ID;
 if (!google_client_id)
@@ -14,10 +15,6 @@ if (!google_client_secret)
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret)
   throw new Error("NEXTAUTH_SECRET is missing on your .env.local file");
-
-const server_url = process.env.SERVER_URL;
-if (!server_url)
-  throw new Error("SERVER_URL is missing on your .env.local file");
 
 // const facebook_client_id = process.env.FACEBOOK_CLIENT_ID;
 // if (!facebook_client_id) throw new Error("FACEBOOK_CLIENT_ID");
@@ -38,23 +35,17 @@ const auth_options: AuthOptions = {
       },
       async authorize(credentials) {
         try {
-          const response = await fetch(server_url + "/v1/user/authenticate", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+          const { data, status, message } = await POSTRequest<User>(
+            "/v1/user/authenticate",
+            {
               email: credentials?.email,
               password: credentials?.password,
-            }),
-          });
+            }
+          );
 
-          const response_json = (await response.json()) as ServerResponse;
+          if (status !== "OK") throw new Error(message);
 
-          if (response_json.status !== "OK")
-            throw new Error(response_json.message);
-
-          return (await response_json.data) as User;
+          return data;
         } catch (error) {
           throw error;
         }
@@ -83,25 +74,20 @@ const auth_options: AuthOptions = {
       try {
         if (profile) {
           const { email } = user;
-          const response = await fetch(server_url + "/v1/user/email/" + email);
+          const { status } = await GETRequest<User>("/v1/user/@" + email);
 
-          const response_json = (await response.json()) as ServerResponse;
-          if (response_json.status === "NOT_FOUND") {
-            await fetch(server_url + "/v1/user", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: email!,
-                first_name: profile.given_name,
-                last_name: profile.family_name,
-                photo: {
-                  height: 500,
-                  width: 500,
-                  url: profile.picture,
-                },
-              } as User),
+          if (status === "NOT_FOUND") {
+            const { data } = await POSTRequest<User>("/v1/user", {
+              email: email!,
+              first_name: profile.given_name,
+              last_name: profile.family_name,
+            } satisfies Omit<User, "id">);
+
+            await POSTRequest("/v1/user/photo", {
+              id: data.id,
+              photo: {
+                url: profile.picture,
+              } satisfies Photo,
             });
           }
         }
@@ -121,13 +107,9 @@ const auth_options: AuthOptions = {
 
       try {
         if (profile) {
-          const response = await fetch(
-            server_url + "/v1/user/email/" + profile.email
-          );
+          const { data } = await GETRequest<User>("/v1/user/@" + profile.email);
 
-          const response_json = (await response.json()) as ServerResponse;
-          const db_user = response_json.data as User;
-          return { ...token, ...db_user };
+          return { ...token, ...data };
         }
         return { ...token, ...user };
       } catch (error) {

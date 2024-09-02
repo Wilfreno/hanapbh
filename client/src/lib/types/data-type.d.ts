@@ -76,9 +76,9 @@ export type Property = {
 export type Photo = {
   url: string;
   type?: "PROFILE" | "PROPERTY" | "ROOM";
-  user?: Types.ObjectId;
-  property?: Types.ObjectId;
-  room?: Types.ObjectId;
+  user?: User;
+  property?: Property;
+  room?: Room;
   date_created?: Date;
   last_updated?: Date;
 };

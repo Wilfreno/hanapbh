@@ -7,7 +7,6 @@ export type PhotoType = {
   property?: Types.ObjectId;
   room?: Types.ObjectId;
   date_created?: Date;
-  last_updated: Date;
 };
 
 const photoSchema = new Schema<PhotoType>(
@@ -21,7 +20,6 @@ const photoSchema = new Schema<PhotoType>(
     property: { type: Schema.Types.ObjectId, ref: "Property" },
     room: { type: Schema.Types.ObjectId, ref: "Room" },
     date_created: { type: Date, default: Date.now },
-    last_updated: { type: Date, required: true },
   },
   { versionKey: false }
 );

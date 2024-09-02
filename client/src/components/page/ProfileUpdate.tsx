@@ -9,16 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Camera, UserRound, X } from "lucide-react";
+import { UserRound, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { UploadthingButton } from "../utils/UploadthingButton";
 import { cn } from "@/lib/utils";
-import useHTTPRequest from "../hooks/useHTTPRequest";
-import { Photo } from "@/lib/types/data-type";
+import { Photo, User } from "@/lib/types/data-type";
 import { toast } from "sonner";
+import { PATCHRequest, POSTRequest } from "@/lib/server/fetch";
 
 export default function ProfileUpdate() {
   const [photo_url, setPhotoUrl] = useState("");
@@ -27,9 +27,8 @@ export default function ProfileUpdate() {
   const pathname = usePathname();
   const router = useRouter();
   const { data, update } = useSession();
-  const http_request = useHTTPRequest();
   return (
-    <Dialog open={!!user_new && !!data && !!data.user.photo}>
+    <Dialog open={!!user_new && !!data && !data.user.photo}>
       <DialogContent className="space-y-10">
         <DialogHeader>
           <DialogTitle>Update your Profile Photo</DialogTitle>
@@ -84,18 +83,19 @@ export default function ProfileUpdate() {
             disabled={!photo_url}
             onClick={async () => {
               const {
-                data: photo,
+                data: user,
                 status,
                 message,
-              } = await http_request.PATCH("/v1/user/photo", {
+              } = await PATCHRequest<User>("/v1/user/photo", {
                 id: data?.user.id,
                 photo: { url: photo_url } satisfies Photo,
               });
-              if (status !== "CREATED") {
-                toast.warning(message);
+              if (status !== "OK") {
+                toast.error(message);
                 return;
               }
-              await update({ photo: photo as Photo });
+
+              await update({ photo: user.photo });
               router.replace(pathname);
             }}
           >
