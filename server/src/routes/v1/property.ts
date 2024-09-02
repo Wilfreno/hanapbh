@@ -40,8 +40,6 @@ export default function property_v1_router(
           type: "property",
           property: new_property._id,
           url: photo.url,
-          height: photo.height,
-          width: photo.width,
           last_updated: new Date(),
         });
         await new_photo.save({ session });
@@ -159,14 +157,14 @@ export default function property_v1_router(
   });
 
   fastify.get<{
-    Params: { id: string };
+    Params: { name: string };
     Querystring: Record<"longitude" | "latitude", string>;
   }>("/:id", async (request, reply) => {
     try {
-      const { id } = request.params;
+      const { name } = request.params;
       const { longitude, latitude } = request.query;
       const found_property = await Property.findOne({
-        _id: id,
+        name: name.replaceAll("-", " ").toLowerCase(),
       }).populate(["photos", "rooms", "reviews"]);
 
       if (!found_property)
@@ -362,8 +360,6 @@ export default function property_v1_router(
                 type: "PROPERTY",
                 url: photo.url,
                 property: found_property._id,
-                width: photo.width,
-                height: photo.height,
                 last_updated: new Date(),
               })
             );
