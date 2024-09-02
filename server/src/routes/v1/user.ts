@@ -123,45 +123,24 @@ export default function userV1Router(
     }
   );
   //read route
-  fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    try {
-      const user_id = request.params.id;
-
-      const found_user = await User.findOne({ _id: user_id })
-        .select("-password")
-        .populate("photo");
-
-      if (!found_user)
-        return reply
-          .code(404)
-          .send(JSONResponse("NOT_FOUND", "user does not exist"));
-
-      return reply
-        .code(200)
-        .send(
-          JSONResponse(
-            "OK",
-            "request successful",
-            exclude(found_user.toJSON(), ["password"])
-          )
-        );
-    } catch (error) {
-      fastify.log.error(error);
-      return reply
-        .code(500)
-        .send(
-          JSONResponse("INTERNAL_SERVER_ERROR", "oops! something went wrong")
-        );
-    }
-  });
-  fastify.get<{ Params: { email: string } }>(
-    "/email/:email",
+  fastify.get<{ Params: { user: string } }>(
+    "/:user",
     async (request, reply) => {
       try {
-        const user_email = request.params.email;
+        const { user } = request.params;
+
+        if (!user.startsWith("@"))
+          reply
+            .code(400)
+            .send(
+              JSONResponse("BAD_REQUEST", "request parameter must start with @")
+            );
 
         const found_user = await User.findOne({
-          email: user_email.toLowerCase(),
+          email: {
+            $regex: "^" + user.substring(1).toLowerCase(),
+            $options: "i",
+          },
         })
           .select("-password")
           .populate("photo");
@@ -173,13 +152,7 @@ export default function userV1Router(
 
         return reply
           .code(200)
-          .send(
-            JSONResponse(
-              "OK",
-              "request successful",
-              exclude(found_user.toJSON(), ["password"])
-            )
-          );
+          .send(JSONResponse("OK", "request successful", found_user.toJSON()));
       } catch (error) {
         fastify.log.error(error);
         return reply
@@ -348,7 +321,7 @@ export default function userV1Router(
     }
   );
   //update route
-  fastify.get<{
+  fastify.patch<{
     Params: { key: keyof UserType };
     Body: Omit<UserType, "photo"> & {
       pin: string;
