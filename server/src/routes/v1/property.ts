@@ -130,10 +130,8 @@ export default function property_v1_router(
         | null;
 
       return reply.code(200).send(
-        JSONResponse(
-          "OK",
-          "request successful",
-          database_properties
+        JSONResponse("OK", "request successful", {
+          result: database_properties
             ? database_properties.map((l) => ({
                 ...exclude({ id: l._id, ...l }, ["_id"]),
                 distance: getDistance(
@@ -147,8 +145,9 @@ export default function property_v1_router(
                   }
                 ),
               }))
-            : []
-        )
+            : [],
+          next_page: database_properties!.length >= 20 ? page + 1 : null,
+        })
       );
     } catch (error) {
       fastify.log.error(error);

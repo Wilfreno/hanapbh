@@ -1,8 +1,6 @@
 "use client";
-import useHTTPRequest from "@/components/hooks/useHTTPRequest";
 import UserLocation from "@/components/page/UserLocation";
 import { Property } from "@/lib/types/data-type";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import LodgingCardsSkeleton from "@/components/page/loading-skeleton/LodgingCardsSkeleton";
 import PropertyCard from "@/components/page/PropertyCard";
@@ -11,13 +9,18 @@ import ListSort from "@/components/page/ListSort";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import LoadingSvg from "@/components/svg/LoadingSvg";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { GETRequest } from "@/lib/server/fetch";
 
+type C = {
+  lat: number;
+  lng: number;
+} | null;
 
 export default function Page() {
-  const [loading, setLoading] = useState({ initial: true, refetching: false });
   const [properties, setProperties] = useState<Property[]>([]);
   const [modified_list, setModifiedList] = useState<Property[]>([]);
-  const [page, setPage] = useState<number | null>(1);
+  const [page, setPage] = useState<number>(1);
   const [filter, setFilter] = useState({
     distance: 500,
     property_type: new Map(),
@@ -25,62 +28,35 @@ export default function Page() {
   });
   const [sort, setSort] = useState({ name: "", distance: "ascend" });
 
-  const lng = useSearchParams().get("lng");
-  const lat = useSearchParams().get("lat");
+  const { getQueryData } = useQueryClient();
 
-  const http_request = useHTTPRequest();
+  const coords = getQueryData<C>(["user_location"]);
 
-  async function getNearbyProperties() {
-    try {
-      const { data } = await http_request.GET("/v1/property/nearby", {
-        latitude: lat,
-        longitude: lng,
-        page,
-        max_distance: filter.distance,
-      });
-      setProperties((prev) => [...prev, ...(data as Property[])]);
-      if (!(data as Property[]).length) setPage(null);
-    } catch (error) {
-      throw error;
-    }
-  }
+  const { data, error, isFetching, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      enabled: !!coords,
+      queryKey: ["nearby_properties", filter.distance],
+      queryFn: async ({ pageParam }) => {
+        const {
+          data: response,
+          status,
+          message,
+        } = await GETRequest<{
+          result: Property[];
+          next_page: number | null;
+        }>("/v1/property/nearby", {
+          latitude: coords?.lat.toString()!,
+          longitude: coords?.lng.toString()!,
+          page: pageParam.toString(),
+          max_distance: filter.distance.toString(),
+        });
 
-  useEffect(() => {
-    if (!lat || !lng) return;
-    async function initialFetch() {
-      setLoading((prev) => ({ ...prev, initial: true }));
-
-      await getNearbyProperties();
-      setLoading((prev) => ({ ...prev, initial: false }));
-    }
-    initialFetch();
-  }, [lat, lng]);
-
-  useEffect(() => {
-    if (page === 1) return;
-    async function reFetch() {
-      setLoading((prev) => ({ ...prev, refetching: true }));
-      await getNearbyProperties();
-      setLoading((prev) => ({ ...prev, refetching: false }));
-    }
-    reFetch();
-  }, [page]);
-
-  useEffect(() => {
-    if (!properties.length) return;
-    if (!filter.distance) return;
-    if (
-      filter.distance === 100 ||
-      filter.distance === 200 ||
-      filter.distance === 300 ||
-      filter.distance === 400 ||
-      filter.distance === 500
-    ) {
-      setModifiedList(properties.filter((p) => p.distance <= filter.distance));
-      return;
-    }
-    getNearbyProperties();
-  }, [filter.distance, properties]);
+        if (status !== "OK") throw new Error(message);
+        return response;
+      },
+      initialPageParam: 1,
+      getNextPageParam: (data) => data!.next_page,
+    });
 
   useEffect(() => {
     if (!properties.length) return;
@@ -174,32 +150,26 @@ export default function Page() {
       </div>
       <UserLocation>
         <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
-          {loading.initial ? (
-            <LodgingCardsSkeleton />
-          ) : modified_list.length ? (
-            modified_list.map((property) => (
-              <PropertyCard key={property.name} property={property} />
-            ))
-          ) : (
-            properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))
-          )}
+          {modified_list.length
+            ? modified_list.map((property) => (
+                <PropertyCard key={property.name} property={property} />
+              ))
+            : properties.length &&
+              properties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+          {isFetching && <LodgingCardsSkeleton />}
         </section>
       </UserLocation>
       <Button
         className={cn(
           "w-fit justify-self-center rounded-full",
-          !page || (loading.initial && "hidden")
+          !page || (isFetching && "hidden")
         )}
         variant="ghost"
         onClick={() => setPage((prev) => prev! + 1)}
       >
-        {loading.refetching ? (
-          <LoadingSvg className="h-8 w-auto fill-primary" />
-        ) : (
-          "Load More"
-        )}
+        Load More
       </Button>
     </main>
   );
