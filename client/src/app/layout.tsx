@@ -9,6 +9,7 @@ import ReduxProvider from "@/components/ReduxProvider";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "./api/uploadthing/core";
+import ReactQueryProvider from "@/components/ReactQueryProvider";
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -31,12 +32,12 @@ export default function RootLayout({
       <body className={cn("antialiased overflow-x-hidden", poppins.className)}>
         <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ReduxProvider>
+          <ReactQueryProvider>
             <NextAuthSessionProvider>
               {children}
               <Toaster position="top-center" richColors />
             </NextAuthSessionProvider>
-          </ReduxProvider>
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>
