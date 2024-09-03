@@ -35,7 +35,7 @@ export type Property = {
   owner?: User;
   name: string;
   type?: "BOARDING_HOUSE" | "BED_SPACER" | "APARTMENT" | "PAD";
-  description: string;
+  description: string[];
   amenities: (
     | "FREE_WATER"
     | "FREE_WIFI"
@@ -51,7 +51,7 @@ export type Property = {
     | "PARKING_LOT"
   )[];
   occupancies: Occupant[];
-  activities: Types.ObjectId[];
+  activities: Activity[];
 
   location: {
     type: "Point";

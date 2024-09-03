@@ -122,6 +122,70 @@ export default function property_v1_router(
             foreignField: "_id",
           },
         },
+        {
+          $lookup: {
+            from: "users",
+            as: "owner",
+            localField: "owner",
+            foreignField: "_id",
+            pipeline: [
+              {
+                $lookup: {
+                  from: "photos",
+                  as: "photo",
+                  localField: "photo",
+                  foreignField: "_id",
+                  pipeline: [
+                    {
+                      $project: {
+                        id: "$_id",
+                        _id: false,
+                        url: true,
+                        type: true,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                $unwind: {
+                  path: "$photo",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  id: "$_id",
+                  _id: false,
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                  email: true,
+                  photo: true,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: "$owner",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $project: {
+            owner: true,
+            id: "$_id",
+            name: true,
+            type: true,
+            amenities: true,
+            location: true,
+            address: true,
+            provider: true,
+          },
+        },
       ])) as
         | (Document<unknown, {}, PropertyType> &
             PropertyType & {
@@ -134,19 +198,10 @@ export default function property_v1_router(
           result: database_properties
             ? database_properties.map((l) => ({
                 ...exclude({ id: l._id, ...l }, ["_id"]),
-                distance: getDistance(
-                  {
-                    latitude: Number(latitude),
-                    longitude: Number(longitude),
-                  },
-                  {
-                    latitude: l.location.coordinates[1],
-                    longitude: l.location.coordinates[0],
-                  }
-                ),
               }))
             : [],
-          next_page: database_properties!.length >= 20 ? page + 1 : null,
+          next_page:
+            database_properties!.length >= 20 ? Number(page) + 1 : null,
         })
       );
     } catch (error) {
