@@ -40,13 +40,13 @@ export default function CustomImage({
           "&photo_reference=" +
           photo.url +
           "&maxwidth=" +
-          photo.width +
+          1000 +
           "&maxheight" +
-          photo.height
+          1000
         }
         alt={"photo"}
-        width={photo.width}
-        height={photo.height}
+        width={1000}
+        height={1000}
         className="w-full h-full object-cover rounded-xl"
         priority
       />
@@ -54,8 +54,8 @@ export default function CustomImage({
       <Image
         src={photo.url}
         alt={"photo"}
-        width={photo.width}
-        height={photo.height}
+        width={1000}
+        height={1000}
         className="w-full h-full object-cover rounded-xl"
         priority
       />

@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/components/utils/ThemeProvider";
 import NextAuthSessionProvider from "@/components/page/auth/NextAuthSessionProvider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
-import ReduxProvider from "@/components/ReduxProvider";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "./api/uploadthing/core";

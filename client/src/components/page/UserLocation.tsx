@@ -2,22 +2,23 @@
 
 import React, { useEffect, useState } from "react";
 import { useToast } from "../ui/use-toast";
-import { MapPinOff, MapPinX, MapPinXInside } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { GETRequest } from "@/lib/server/fetch";
-import { Property } from "@/lib/types/data-type";
-
+import { MapPinOff, MapPinXInside } from "lucide-react";
 type E = "LOCATION_NONE" | "PERMISSION_DENIED";
+type C = {
+  lat: number;
+  lng: number;
+} | null;
 
 export default function UserLocation({
   children,
+  coordinates,
 }: {
   children: React.ReactNode;
+  coordinates: (coords: C) => void;
 }) {
   const [error, setError] = useState<E>();
 
   const { toast } = useToast();
-  const { setQueryData } = useQueryClient();
 
   useEffect(() => {
     if (!navigator.geolocation.getCurrentPosition) {
@@ -32,10 +33,10 @@ export default function UserLocation({
     function getPosition() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setQueryData(["user_Location"], () => ({
+          coordinates({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          }));
+          });
         },
         (error) => {
           if (error.PERMISSION_DENIED) setError("PERMISSION_DENIED");

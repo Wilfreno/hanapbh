@@ -120,6 +120,16 @@ export default function property_v1_router(
             as: "photos",
             localField: "photos",
             foreignField: "_id",
+            pipeline: [
+              {
+                $project: {
+                  id: "$_id",
+                  _id: false,
+                  url: true,
+                  type: true,
+                },
+              },
+            ],
           },
         },
         {
@@ -184,6 +194,8 @@ export default function property_v1_router(
             location: true,
             address: true,
             provider: true,
+            photos: true,
+            distance: true
           },
         },
       ])) as
