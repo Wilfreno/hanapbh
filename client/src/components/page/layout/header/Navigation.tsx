@@ -28,7 +28,7 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className="hidden sm:inline-block mx-auto space-x-10 pl-16">
+      <nav className="hidden sm:flex space-x-10  whitespace-nowrap items-center justify-center">
         {items.map((item) => (
           <Link key={item.name} href={item.link} as={item.link}>
             <Button

@@ -15,7 +15,7 @@ export default function AddPlace() {
     >
       <Button
         variant="ghost"
-        className="rounded-full text-muted-foreground mr-20 font-bold"
+        className="rounded-full text-xs text-muted-foreground font-bold"
       >
         Add your place
       </Button>
