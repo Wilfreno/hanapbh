@@ -4,7 +4,7 @@ import React from "react";
 import AddPlace from "./AddPlace";
 import HeaderDropdownMenu from "./HeaderDropdownMenu";
 import Navigation from "./Navigation";
-import HeaderDropdownMenuMobile from "./HeaderDropdownMenuMobile";
+import HeaderMobileAsideMenu from "./HeaderMobileAsideMenu";
 import Logo from "./Logo";
 
 export default function Header() {
@@ -24,7 +24,7 @@ export default function Header() {
         <div className="flex justify-between grow px-4 py-2">
           <Logo />
 
-          <HeaderDropdownMenuMobile />
+          <HeaderMobileAsideMenu />
         </div>
         <Navigation />
       </span>
