@@ -1,9 +1,10 @@
 import useSearchParamsGenerator from "../../../hooks/useSearchParamsGenerator";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function FilterContent() {
   const [custom_distance, setCustomDistance] = useState({
@@ -17,6 +18,10 @@ export default function FilterContent() {
     amenities: [] as string[],
   });
   const { concat, remove } = useSearchParamsGenerator();
+
+  const distance = useSearchParams().get("distance");
+  const type = useSearchParams().get("type");
+  const amenities = useSearchParams().get("am");
 
   const distance_items = [
     { name: "Under 100m", value: 100 },
@@ -50,6 +55,14 @@ export default function FilterContent() {
     { name: "Any", value: "ANY" },
   ];
 
+  useEffect(() => {
+    if (distance)
+      setSelected((prev) => ({ ...prev, distance: Number(distance) }));
+    if (type) setSelected((prev) => ({ ...prev, type: type.split("|") }));
+    if (amenities)
+      setSelected((prev) => ({ ...prev, amenities: amenities.split("|") }));
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* distance */}
@@ -60,10 +73,9 @@ export default function FilterContent() {
             <Button
               onClick={() => {
                 setSelected((prev) => ({ ...prev, distance: item.value }));
-                concat("d", item.value.toString());
+                concat("distance", item.value.toString());
               }}
               key={item.name}
-              className="rounded-full"
               variant={selected.distance === item.value ? "default" : "outline"}
             >
               {item.name}
@@ -71,7 +83,6 @@ export default function FilterContent() {
           ))}
           <Button
             variant={custom_distance.display ? "default" : "outline"}
-            className="rounded-full"
             onClick={() => {
               setCustomDistance((prev) => ({
                 ...prev,
@@ -90,7 +101,7 @@ export default function FilterContent() {
                       ...prev,
                       distance: item.value,
                     }));
-                    concat("d", item.value.toString());
+                    concat("distance", item.value.toString());
                   }}
                   key={item.name}
                   className="rounded-full"
@@ -146,7 +157,7 @@ export default function FilterContent() {
                   },
                 ],
               }));
-              concat("d", custom_distance.value.toString());
+              concat("distance", custom_distance.value.toString());
 
               setCustomDistance((prev) => ({ ...prev, value: "" }));
             }}
@@ -159,7 +170,6 @@ export default function FilterContent() {
                 type="text"
                 inputMode="numeric"
                 id="custom"
-                className="rounded-full"
                 max={50000}
                 value={custom_distance.value}
                 onChange={(e) =>
@@ -192,7 +202,7 @@ export default function FilterContent() {
               onClick={() => {
                 if (item.value === "ANY") {
                   setSelected((prev) => ({ ...prev, type: [] }));
-                  remove("f");
+                  remove("type");
                   return;
                 }
 
@@ -206,23 +216,25 @@ export default function FilterContent() {
                   }));
 
                   if (a.length) {
-                    concat("f", a.join("|"));
+                    concat("type", a.join("|"));
                   } else {
-                    remove("f");
+                    remove("type");
                   }
                 } else {
                   a.push(item.value);
                   setSelected((prev) => ({
                     ...prev,
-                    type: [...prev.type, item.value],
+                    type: a,
                   }));
-                  concat("f", a.join("|"));
+                  concat("type", a.join("|"));
                 }
               }}
               key={item.name}
               className="rounded-full"
               variant={
-                selected.type.some((v) => v === item.value)
+                !selected.type.length && item.value === "ANY"
+                  ? "default"
+                  : selected.type.some((v) => v === item.value)
                   ? "default"
                   : "outline"
               }
@@ -264,7 +276,7 @@ export default function FilterContent() {
                   a.push(item.value);
                   setSelected((prev) => ({
                     ...prev,
-                    amenities: [...prev.type, item.value],
+                    amenities: a,
                   }));
                   concat("am", a.join("|"));
                 }
@@ -272,7 +284,9 @@ export default function FilterContent() {
               key={item.name}
               className="rounded-full"
               variant={
-                selected.amenities.some((v) => v === item.value)
+                !selected.amenities.length && item.value === "ANY"
+                  ? "default"
+                  : selected.amenities.some((v) => v === item.value)
                   ? "default"
                   : "outline"
               }

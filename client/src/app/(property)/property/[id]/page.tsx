@@ -3,7 +3,6 @@
 import useHTTPRequest from "@/components/hooks/useHTTPRequest";
 import CustomImage from "@/components/page/CustomImage";
 import { Button } from "@/components/ui/button";
-import { useAppSelector } from "@/lib/redux/store";
 import { Property } from "@/lib/types/data-type";
 import { ServerResponse } from "@/lib/types/server-response";
 import { cn } from "@/lib/utils";
@@ -17,7 +16,6 @@ import {
   Droplet,
   MapPin,
   ParkingMeter,
-  Pin,
   ShowerHead,
   Star,
   StarHalf,
@@ -36,34 +34,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const [response_status, setResponseStatus] =
     useState<ServerResponse["status"]>();
 
-  const user_location = useAppSelector((state) => state.user_location);
-
   const from = useSearchParams().get("f");
-  const http_request = useHTTPRequest();
-
-  useEffect(() => {
-    if (!user_location) return;
-    async function getProperty() {
-      const { data, status } = await http_request.GET<Property>(
-        "/v1/property/" + params.id,
-        { latitude: user_location?.lat, longitude: user_location?.lng }
-      );
-
-      setResponseStatus(status);
-      if (status !== "OK") return;
-
-      setProperty(data);
-      // setReviewAvg(
-      //   d?.reviews.length
-      //     ? d?.reviews
-      //         .map((review) => review.rate)
-      //         .reduce((latest, rate) => latest + rate) / d.reviews.length
-      //     : 0
-      // );
-    }
-
-    getProperty();
-  }, [user_location]);
 
   if (response_status !== "OK") return null;
   return (

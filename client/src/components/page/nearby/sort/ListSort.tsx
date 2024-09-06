@@ -1,16 +1,13 @@
-import { Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-import useMediaQuery from "../../../hooks/useMediaQuery";
+import { ListOrdered } from "lucide-react";
+import { Button } from "../../../ui/button";
 import {
+  DrawerTitle,
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from "../../../ui/drawer";
-import { ScrollArea } from "../../../ui/scroll-area";
+import useMediaQuery from "../../../hooks/useMediaQuery";
 import {
   Dialog,
   DialogClose,
@@ -20,28 +17,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../../ui/dialog";
-import FilterContent from "./FilterContent";
+import SortContent from "./SortContent";
 
-export default function PageFilter() {
+export default function ListSort() {
   const on_desktop = useMediaQuery();
 
   return on_desktop ? (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" className="p-1">
-          <Filter className="h-4" />
+          <ListOrdered className="h-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Filter By</DialogTitle>
+          <DialogTitle>Sort by</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[60dvh]">
-          <FilterContent />
-        </ScrollArea>
+        <SortContent />
         <DialogFooter>
-          <DialogClose asChild>
-            <Button className="ml-auto font-medium">Ok</Button>
+          <DialogClose asChild className="ml-auto">
+            <Button className="font-medium">Ok</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -50,17 +45,14 @@ export default function PageFilter() {
     <Drawer>
       <DrawerTrigger asChild>
         <Button variant="ghost" className="p-1">
-          <Filter className="h-4" />
+          <ListOrdered className="h-4" />
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Filter by</DrawerTitle>
-          <DrawerClose className="absolute top-0 right-0 w-full flex justify-end h-8"></DrawerClose>
+          <DrawerTitle>Sort by</DrawerTitle>
         </DrawerHeader>
-        <ScrollArea className="h-[80dvh]">
-          <FilterContent />
-        </ScrollArea>
+        <SortContent />
       </DrawerContent>
     </Drawer>
   );

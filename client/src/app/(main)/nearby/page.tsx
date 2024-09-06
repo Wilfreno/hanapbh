@@ -1,7 +1,7 @@
 "use client";
 import UserLocation from "@/components/page/UserLocation";
 import { Property } from "@/lib/types/data-type";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import LodgingCardsSkeleton from "@/components/page/loading-skeleton/LodgingCardsSkeleton";
 import PropertyCard from "@/components/page/PropertyCard";
 import PageFilter from "@/components/page/nearby/filter/PageFilter";
@@ -13,6 +13,7 @@ import { GETRequest } from "@/lib/server/fetch";
 import OutOfBound from "@/components/page/error/OutOfBound";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import ListSort from "@/components/page/nearby/sort/ListSort";
 
 type C = {
   lat: number;
@@ -22,16 +23,16 @@ type C = {
 export default function Page() {
   const [user_location, setUserLocation] = useState<C>(null);
 
-  const distance = useSearchParams().get("d");
-  const property_type = useSearchParams().get("pt");
+  const distance = useSearchParams().get("distance");
+  const property_type = useSearchParams().get("type");
   const amenities = useSearchParams().get("am");
-  const sort = useSearchParams().get("s");
-  const filter = useSearchParams().get("f");
+  const name_sort = useSearchParams().get("name_sort");
+  const distance_sort = useSearchParams().get("distance_sort");
 
   const { data, error, isFetching, fetchNextPage, hasNextPage } =
     useInfiniteQuery({
       enabled: !!user_location,
-      queryKey: ["nearby_properties"],
+      queryKey: ["nearby_properties", distance],
       queryFn: async ({ pageParam }) => {
         const {
           data: response,
@@ -57,21 +58,66 @@ export default function Page() {
       getNextPageParam: (data) => data!.next_page,
     });
 
-  // const filtered_data = useMemo(() => {}, [data, property_type, amenities, filter]);
+  const filtered_data = useMemo(() => {
+    let new_data = data?.pages;
+
+    if (property_type) {
+      new_data = new_data!.map((data) => ({
+        ...data,
+        result: data.result.filter((result) =>
+          property_type.split("|").some((type) => type === result.type)
+        ),
+      }));
+    }
+
+    if (amenities) {
+      new_data = new_data?.map((data) => ({
+        ...data,
+        result: data.result.filter((result) =>
+          result.amenities.some((am) =>
+            amenities.split("|").some((a) => a === am)
+          )
+        ),
+      }));
+    }
+
+    if (name_sort) {
+      new_data = new_data?.map((data) => ({
+        ...data,
+        result: data.result.toSorted((a, b) =>
+          name_sort === "z-a"
+            ? b.name.localeCompare(a.name)
+            : a.name.localeCompare(b.name)
+        ),
+      }));
+    }
+
+    if (distance_sort) {
+      new_data = new_data?.map((data) => ({
+        ...data,
+        result: data.result.toSorted((a, b) =>
+          distance_sort === "9-0"
+            ? b.distance - a.distance
+            : a.distance - b.distance
+        ),
+      }));
+    }
+    return new_data;
+  }, [data, property_type, amenities, name_sort, distance_sort]);
 
   return (
     <main className="grid grid-rows-[auto_1fr_auto] sm:px-[10vw] py-8 space-y-8 scroll-smooth">
       <div className="flex items-center mx-5 space-x-1">
         <PageFilter />
-        {/* <ListSort /> */}
+        <ListSort />
       </div>
       {error?.message === "OUT_OF_BOUND" ? (
         <OutOfBound />
       ) : (
         <UserLocation coordinates={(c) => setUserLocation(c)}>
           <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
-            {data ? (
-              data.pages.map((page) =>
+            {filtered_data ? (
+              filtered_data.map((page) =>
                 page.result.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))

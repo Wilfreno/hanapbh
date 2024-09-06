@@ -7,8 +7,8 @@ export default function useSearchParamsGenerator() {
   const router = useRouter();
   return {
     concat: (key: string, value: string) => {
+      let params = "";
       if (search_params.has(key)) {
-        let params = "";
         search_params.forEach((v, k) => {
           if (k !== key) params += "&" + k + "=" + v;
         });
@@ -19,11 +19,11 @@ export default function useSearchParamsGenerator() {
         return;
       }
 
-      router.replace(
-        pathname +
-          "?" +
-          (search_params.toString() + "&" + key + "=" + value).replace("&", "")
-      );
+      params = search_params.size
+        ? search_params.toString() + "&" + key + "=" + value
+        : key + "=" + value;
+
+      router.replace(pathname + "?" + params);
     },
     remove: (key: string) => {
       if (!search_params.has(key)) return;
