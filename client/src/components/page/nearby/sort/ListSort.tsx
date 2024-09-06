@@ -31,7 +31,7 @@ export default function ListSort() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Sort by</DialogTitle>
+          <DialogTitle className="font-bold text-xl">Sort by</DialogTitle>
         </DialogHeader>
         <SortContent />
         <DialogFooter>
@@ -50,7 +50,7 @@ export default function ListSort() {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Sort by</DrawerTitle>
+          <DrawerTitle className="font-bold text-xl">Sort by</DrawerTitle>
         </DrawerHeader>
         <SortContent />
       </DrawerContent>

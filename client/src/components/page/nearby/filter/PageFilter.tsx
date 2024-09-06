@@ -34,7 +34,7 @@ export default function PageFilter() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Filter By</DialogTitle>
+          <DialogTitle className="font-bold text-xl">Filter By</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[60dvh]">
           <FilterContent />
@@ -54,11 +54,13 @@ export default function PageFilter() {
         </Button>
       </DrawerTrigger>
       <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>Filter by</DrawerTitle>
-          <DrawerClose className="absolute top-0 right-0 w-full flex justify-end h-8"></DrawerClose>
+        <DrawerHeader className="flex items-center justify-between">
+          <DrawerTitle className="font-bold text-xl">Filter by</DrawerTitle>
+          <DrawerClose asChild>
+            <Button className="font-medium">Ok</Button>
+          </DrawerClose>
         </DrawerHeader>
-        <ScrollArea className="h-[80dvh]">
+        <ScrollArea className="h-[80dvh] px-4">
           <FilterContent />
         </ScrollArea>
       </DrawerContent>
