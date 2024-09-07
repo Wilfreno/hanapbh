@@ -1,19 +1,21 @@
 import { Property } from "@/lib/types/data-type";
 import { motion } from "framer-motion";
 import { MapPin, Star } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import CustomImage from "./CustomImage";
+import { usePathname } from "next/navigation";
 
 export default function PropertyCard({ property }: { property: Property }) {
-  const places_api_key = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-  if (!places_api_key)
-    throw new Error(
-      "NEXT_PUBLIC_GOOGLE_PLACES_API_KEY is missing from your .env.local file"
-    );
-
+  const pathname = usePathname();
   return (
-    <Link href={"/demo/property/" + property.id}>
+    <Link
+      href={
+        "/property/@" +
+        property.name.replaceAll(" ", "-").toLowerCase() +
+        "?from=" +
+        pathname
+      }
+    >
       <motion.div
         whileHover={{ scale: 1.05 }}
         className="space-y-2 cursor-pointer pb-10 px-4"

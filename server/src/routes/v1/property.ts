@@ -74,6 +74,17 @@ export default function property_v1_router(
       const { latitude, longitude } = request.query;
       const { page, max_distance } = request.query;
 
+
+      if (!longitude || !latitude)
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "longitude and latitude is required as query parameters to determine distance"
+            )
+          );
+          
       if (!page || !max_distance)
         return reply
           .code(400)
@@ -195,7 +206,7 @@ export default function property_v1_router(
             address: true,
             provider: true,
             photos: true,
-            distance: true
+            distance: true,
           },
         },
       ])) as
@@ -225,12 +236,30 @@ export default function property_v1_router(
   fastify.get<{
     Params: { name: string };
     Querystring: Record<"longitude" | "latitude", string>;
-  }>("/:id", async (request, reply) => {
+  }>("/:name", async (request, reply) => {
     try {
       const { name } = request.params;
       const { longitude, latitude } = request.query;
+
+      if (!name.startsWith("@"))
+        return reply
+          .code(400)
+          .send(JSONResponse("BAD_REQUEST", "property name must start with @"));
+
+      if (!longitude || !latitude)
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "longitude and latitude is required as query parameters to determine distance"
+            )
+          );
       const found_property = await Property.findOne({
-        name: name.replaceAll("-", " ").toLowerCase(),
+        name: {
+          $regex: "^" + name.substring(1).replaceAll("-", " ").toLowerCase(),
+          $options: "i",
+        },
       }).populate(["photos", "rooms", "reviews"]);
 
       if (!found_property)

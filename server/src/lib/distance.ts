@@ -35,5 +35,5 @@ export default function getDistance(
 
   const distance = earth_radius_km * c;
 
-  return distance * 1000;
+  return distance;
 }
