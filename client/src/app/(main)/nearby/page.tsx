@@ -105,7 +105,6 @@ export default function Page() {
     return new_data;
   }, [data, property_type, amenities, name_sort, distance_sort]);
 
-  console.log(filtered_data);
   return (
     <main className="grid grid-rows-[auto_1fr_auto] sm:px-[10vw] py-8 space-y-8 scroll-smooth">
       <div className="flex items-center mx-5 space-x-1">

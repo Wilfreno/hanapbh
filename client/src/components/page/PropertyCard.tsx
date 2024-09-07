@@ -8,14 +8,7 @@ import { usePathname } from "next/navigation";
 export default function PropertyCard({ property }: { property: Property }) {
   const pathname = usePathname();
   return (
-    <Link
-      href={
-        "/property/@" +
-        property.name.replaceAll(" ", "-").toLowerCase() +
-        "?from=" +
-        pathname
-      }
-    >
+    <Link href={"/property/" + property.id + "?from=" + pathname}>
       <motion.div
         whileHover={{ scale: 1.05 }}
         className="space-y-2 cursor-pointer pb-10 px-4"

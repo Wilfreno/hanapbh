@@ -36,7 +36,7 @@ type C = {
   lng: number;
 } | null;
 
-export default function Page({ params }: { params: { name: string } }) {
+export default function Page({ params }: { params: { id: string } }) {
   const [review_avg, setReviewAvg] = useState(3.5);
   const [user_location, setUserLocation] = useState<C>(null);
 
@@ -44,12 +44,12 @@ export default function Page({ params }: { params: { name: string } }) {
 
   const { data, isError } = useQuery({
     enabled: !!user_location,
-    queryKey: ["data", params.name],
+    queryKey: ["data", params.id],
     queryFn: async () => {
       try {
         const { data, status, message } = await GETRequest<Property>(
           "/v1/property/" +
-            params.name.toString() +
+            params.id +
             "?longitude=" +
             user_location?.lng +
             "&latitude=" +

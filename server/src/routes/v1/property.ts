@@ -5,6 +5,10 @@ import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { Document, startSession, Types } from "mongoose";
 import getDistance from "../../lib/distance";
 import exclude from "../../lib/exclude";
+import {
+  getNearbyProperty,
+  getPropertyDetails,
+} from "../../lib/google-places-api";
 
 export default function property_v1_router(
   fastify: FastifyInstance,
@@ -74,7 +78,6 @@ export default function property_v1_router(
       const { latitude, longitude } = request.query;
       const { page, max_distance } = request.query;
 
-
       if (!longitude || !latitude)
         return reply
           .code(400)
@@ -84,7 +87,7 @@ export default function property_v1_router(
               "longitude and latitude is required as query parameters to determine distance"
             )
           );
-          
+
       if (!page || !max_distance)
         return reply
           .code(400)
@@ -107,7 +110,7 @@ export default function property_v1_router(
 
       const skip = 20 * (Number(page) - 1);
 
-      const database_properties = (await Property.aggregate([
+      const database_properties = await Property.aggregate([
         {
           $geoNear: {
             near: {
@@ -209,19 +212,20 @@ export default function property_v1_router(
             distance: true,
           },
         },
-      ])) as
-        | (Document<unknown, {}, PropertyType> &
-            PropertyType & {
-              _id: Types.ObjectId;
-            })[]
-        | null;
+      ]);
 
+      const nearby_places_api_result = await getNearbyProperty({
+        latitude,
+        longitude,
+      });
       return reply.code(200).send(
         JSONResponse("OK", "request successful", {
           result: database_properties
-            ? database_properties.map((l) => ({
-                ...exclude({ id: l._id, ...l }, ["_id"]),
-              }))
+            ? database_properties
+                .map((l) => ({
+                  ...exclude({ id: l._id, ...l }, ["_id"]),
+                }))
+                .concat(nearby_places_api_result)
             : [],
           next_page:
             database_properties!.length >= 20 ? Number(page) + 1 : null,
@@ -234,17 +238,12 @@ export default function property_v1_router(
   });
 
   fastify.get<{
-    Params: { name: string };
+    Params: { id: string };
     Querystring: Record<"longitude" | "latitude", string>;
-  }>("/:name", async (request, reply) => {
+  }>("/:id", async (request, reply) => {
     try {
-      const { name } = request.params;
+      const { id } = request.params;
       const { longitude, latitude } = request.query;
-
-      if (!name.startsWith("@"))
-        return reply
-          .code(400)
-          .send(JSONResponse("BAD_REQUEST", "property name must start with @"));
 
       if (!longitude || !latitude)
         return reply
@@ -255,12 +254,16 @@ export default function property_v1_router(
               "longitude and latitude is required as query parameters to determine distance"
             )
           );
-      const found_property = await Property.findOne({
-        name: {
-          $regex: "^" + name.substring(1).replaceAll("-", " ").toLowerCase(),
-          $options: "i",
-        },
-      }).populate(["photos", "rooms", "reviews"]);
+      let found_property = null;
+
+      if (!Types.ObjectId.isValid(id)) {
+        found_property = await getPropertyDetails(id);
+      } else {
+        const p = await Property.findOne({
+          _id: id,
+        }).populate(["photos", "rooms", "reviews"]);
+        found_property = p!.toJSON();
+      }
 
       if (!found_property)
         return reply
@@ -269,7 +272,7 @@ export default function property_v1_router(
 
       return reply.code(200).send(
         JSONResponse("OK", "request successful", {
-          ...found_property.toJSON(),
+          ...found_property,
           distance: getDistance(
             { latitude: Number(latitude), longitude: Number(longitude) },
             {
