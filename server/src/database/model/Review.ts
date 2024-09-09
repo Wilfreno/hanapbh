@@ -6,6 +6,9 @@ export type ReviewType = {
   property: Types.ObjectId;
   rate: number;
   comment: string;
+  relative_time_description: string;
+  user_google_url: string;
+  provider: "DB" | "GOOGLE";
   date_created: Date;
   last_updated: Date;
 };
@@ -16,6 +19,7 @@ const reviewSchema = new Schema<ReviewType>(
     property: { type: Schema.Types.ObjectId, ref: "Property" },
     rate: { type: Number, required: true },
     comment: { type: String, default: "" },
+    provider: { type: String, enum: ["DB", "GOOGLE"], default: "DB" },
     date_created: { type: Date, default: Date.now },
     last_updated: { type: Date, default: Date.now },
   },

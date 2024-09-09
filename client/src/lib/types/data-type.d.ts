@@ -57,6 +57,7 @@ export type Property = {
     type: "Point";
     coordinates: [number, number];
   };
+  rating: number;
   distance: number;
   address: {
     vicinity: string;
@@ -88,6 +89,7 @@ export type Review = {
   property: Property;
   rate: number;
   comment: string;
+  relative_time_description: string;
   date_created: Date;
   last_updated?: Date;
 };

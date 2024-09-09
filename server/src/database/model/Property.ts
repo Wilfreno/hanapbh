@@ -23,6 +23,7 @@ export type PropertyType = {
     type: "Point";
     coordinates: [number, number];
   };
+  rating: number;
   distance: number;
   address: {
     vicinity: string;
@@ -116,6 +117,7 @@ const propertySchema = new Schema<PropertyType>(
         default: "",
       },
     },
+
     provider: {
       type: String,
       enum: ["GOOGLE", "DB"],

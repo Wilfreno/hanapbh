@@ -34,20 +34,7 @@ export default function Properties() {
 
   const [lodgings, setLodgings] = useState<Property[]>([]);
 
-  const http_request = useHTTPRequest();
   const { data } = useSession();
-
-  useEffect(() => {
-    if (!data) return;
-    async function getLodging() {
-      const { data: lodging_data } = await http_request.GET(
-        "/v1/user/" + data?.user.id + "/lodging"
-      );
-
-      setLodgings(lodging_data as Property[]);
-    }
-    getLodging();
-  }, [data]);
 
   return (
     <Card>
@@ -131,14 +118,11 @@ export default function Properties() {
                           places_api_key +
                           "&photo_reference=" +
                           lodging.photos[0].url +
-                          "&maxwidth=" +
-                          lodging.photos[0].width +
-                          "&maxheight" +
-                          lodging.photos[0].height
+                          "&maxwidth=1000&maxheight=1000t"
                         }
                         alt={lodging.name}
-                        width={lodging.photos[0].width}
-                        height={lodging.photos[0].height}
+                        width={1000}
+                        height={100}
                         className="aspect-square w-auto h-[10dvh] object-cover rounded-xl"
                         priority
                       />

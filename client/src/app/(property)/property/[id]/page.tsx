@@ -1,11 +1,9 @@
 "use client";
-
 import CustomImage from "@/components/page/CustomImage";
 import UserLocation from "@/components/page/UserLocation";
 import { Button } from "@/components/ui/button";
 import { GETRequest } from "@/lib/server/fetch";
 import { Property } from "@/lib/types/data-type";
-import { ServerResponse } from "@/lib/types/server-response";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,6 +11,7 @@ import {
   Bath,
   Bookmark,
   Cctv,
+  CircleAlert,
   Container,
   CookingPot,
   Droplet,
@@ -37,7 +36,6 @@ type C = {
 } | null;
 
 export default function Page({ params }: { params: { id: string } }) {
-  const [review_avg, setReviewAvg] = useState(3.5);
   const [user_location, setUserLocation] = useState<C>(null);
 
   const from = useSearchParams().get("from");
@@ -67,25 +65,43 @@ export default function Page({ params }: { params: { id: string } }) {
       }
     },
   });
+
   if (isError) return null;
   return (
     <main className="relative w-screen py-12 px-10 space-y-8">
       <UserLocation coordinates={(c) => setUserLocation(c)}>
-        <header className="flex items-start justify-between">
+        <header className="grid w-full">
+          <div className="space-x-4 justify-self-end">
+            <Link href={from ? from : "/"}>
+              <Button size="sm">Go Back</Button>
+            </Link>
+          </div>
           <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-bold">{data?.name}</h1>
-              <h2 className="text-muted-foreground">
+            <span className="space-y-1">
+              <h1
+                className={cn(
+                  "text-3xl font-bold",
+                  !data && "animate-pulse bg-muted rounded-lg w-1/3 h-10"
+                )}
+              >
+                {data?.name}
+              </h1>
+              <h2
+                className={cn(
+                  "text-muted-foreground",
+                  !data && "animate-pulse bg-muted rounded-lg w-1/3 h-4"
+                )}
+              >
                 {data?.address.vicinity}
               </h2>
-            </div>
+            </span>
             <div className="flex items-center space-x-4 font-medium">
               <div className="flex space-x-1">
                 {Array.from({
                   length: 5,
                 }).map((_, index) =>
-                  Math.floor(review_avg) === index + 1 ? (
-                    Math.floor(review_avg) !== review_avg ? (
+                  Math.floor(data?.rating!) === index + 1 ? (
+                    Math.floor(data?.rating!) !== data?.rating! ? (
                       <span key={index} className="relative">
                         <StarHalf className="fill-primary h-5 w-auto stroke" />
                         <Star className="absolute h-5 w-auto top-0 left-0" />
@@ -98,7 +114,7 @@ export default function Page({ params }: { params: { id: string } }) {
                       key={index}
                       className={cn(
                         "h-5 w-auto  fill-muted",
-                        index + 1 < review_avg
+                        index + 1 < data?.rating!
                           ? "fill-primary"
                           : "stroke-muted-foreground"
                       )}
@@ -106,15 +122,18 @@ export default function Page({ params }: { params: { id: string } }) {
                   )
                 )}
               </div>
-              <span className="flex items">
-                {review_avg} {"("} {data?.reviews.length} reviews {")"}
-              </span>
+              <p className="flex items">
+                <span
+                  className={cn(
+                    !data && "w-6 h-4 bg-muted animate-pulse rounded-lg"
+                  )}
+                >
+                  {data?.rating!}
+                </span>{" "}
+                {"("} {data?.reviews.length} reviews {")"}
+              </p>
+              {data?.provider === "DB" && <CircleAlert className="h-4" />}
             </div>
-          </div>
-          <div className="space-x-4">
-            <Link href={from ? from : "/"}>
-              <Button size="sm">Go Back</Button>
-            </Link>
           </div>
         </header>
         <div className="flex space-x-4 justify-between">
@@ -122,7 +141,9 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="space-y-4">
               <h1 className="text-2xl font-bold">Description</h1>
               <div className="prose text-primary">
-                <p>{data?.description}</p>
+                <p>
+                  {!data?.description ? data?.description : "(No Description)"}
+                </p>
               </div>
             </div>
             <div className="space-y-4">

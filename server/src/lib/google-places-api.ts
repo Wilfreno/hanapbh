@@ -2,6 +2,8 @@ import { PropertyType } from "../database/model/Property";
 import { GooglePlacesAPINearbyResponse } from "./types/google-places-api-types";
 import { PhotoType } from "../database/model/Photo";
 import getDistance from "./distance";
+import { ReviewType } from "src/database/model/Review";
+import { UserType } from "src/database/model/User";
 
 export type PlacesDetailsResponse = {
   status: string;
@@ -26,6 +28,15 @@ export type PlacesDetailsResponse = {
       }
     ];
     vicinity: string;
+    reviews: {
+      rating: number;
+      text: string;
+      time: number;
+      relative_time_description: string;
+      author_name: string;
+      author_url: string;
+      profile_photo_url: string;
+    }[];
   };
 };
 export async function getNearbyProperty({
@@ -52,6 +63,7 @@ export async function getNearbyProperty({
       | "photos"
       | "description"
       | "reviews"
+      | "rating"
       | "rooms"
       | "date_created"
       | "last_updated"
@@ -191,7 +203,27 @@ export async function getPropertyDetails(place_id: string) {
         ],
         type: "Point",
       },
-      reviews: [],
+      rating: response_json.result.reviews.length
+        ? response_json.result.reviews.reduce(
+            (current, review) => current + review.rating,
+            0
+          ) / response_json.result.reviews.length
+        : 0,
+      reviews: response_json.result.reviews.length
+        ? response_json.result.reviews.map((review) => ({
+            rate: review.rating,
+            comment: review.text,
+            date_created: new Date(review.time),
+            reviewer: {
+              first_name: review.author_name,
+              last_name: "",
+              photo: { url: review.profile_photo_url },
+            },
+            provider: "GOOGLE",
+            user_google_url: review.author_url,
+            relative_time_description: review.relative_time_description,
+          }))
+        : [],
       rooms: [],
       photos: response_json.result.photos
         ? response_json.result.photos.map((photo) => ({
@@ -211,9 +243,23 @@ export async function getPropertyDetails(place_id: string) {
       | "date_created"
       | "last_updated"
       | "distance"
+      | "reviews"
     > & {
       id: string;
       photos: PhotoType[];
+      reviews: (Omit<ReviewType, "last_updated" | "reviewer" | "property"> & {
+        reviewer: Omit<
+          UserType,
+          | "email"
+          | "activities"
+          | "bio"
+          | "last_updated"
+          | "occupancies"
+          | "password"
+          | "photo"
+          | "reviewer"
+        > & { photo: PhotoType };
+      })[];
     };
   } catch (error) {
     console.log(error);
