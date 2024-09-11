@@ -68,7 +68,8 @@ jobs:
             NEXTAUTH_SECRET="${{secrets.NEXTAUTH_SECRET}}"
             NEXTAUTH_URL="${{secrets.NEXTAUTH_URL}}"
             UPLOADTHING_SECRET="${{secrets.UPLOADTHING_SECRET}}"
-          context: ./client
+            NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="${{secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}}"
+            context: ./client
           push: true
           tags: "wing09/${{ env.CLIENT_SERVICE }}:${{ env.REPO_TAG }}"
 
