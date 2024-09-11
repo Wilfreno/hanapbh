@@ -4,33 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Property } from "@/lib/types/data-type";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import useUserLocation from "@/components/hooks/useUserLocation";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
-export default function PropertyImage({
-  property,
-  is_loading,
-}: {
-  property?: Property;
-  is_loading: boolean;
-}) {
+export default function PropertyImage() {
+  const user_location = useUserLocation();
+  const params = useParams<{ id: string }>();
+  const { isLoading, data } = useQuery<Property>({
+    enabled: !!user_location,
+    queryKey: ["property", params.id, user_location],
+  });
+
   return (
     <div className="flex flex-col gap-4">
-      <div className={cn("aspect-video w-auto h-[70dvh] overflow-hidden", is_loading && "bg")}>
+      <div
+        className={cn(
+          "aspect-video w-auto h-[70dvh] overflow-hidden",
+          isLoading && "bg"
+        )}
+      >
         <CustomImage
-          photo={property?.photos ? property?.photos[0] : null}
-          provider={property?.provider}
+          photo={data?.photos ? data?.photos[0] : null}
+          provider={data?.provider}
         />
       </div>
-      <div className="flex items-center self-end gap-8">
-        <Link
-          href={"/map/" + property?.id}
-          as={"/map/" + property?.id}
-          prefetch
-        >
-          <Button variant="secondary" className="gap-1">
-            <span>See Map</span>
-            <Map className="h-4" />
-          </Button>
-        </Link>
+      <div className="flex items-center self-end">
         <Button size="lg" className="w-fit  gap-2">
           <span className="text-lg   font-bold">Book Now </span>
           <Bookmark className="h-full" />

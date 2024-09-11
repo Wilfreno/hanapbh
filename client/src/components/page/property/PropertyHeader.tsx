@@ -1,45 +1,48 @@
+import useUserLocation from "@/components/hooks/useUserLocation";
 import { Button } from "@/components/ui/button";
 import { Property } from "@/lib/types/data-type";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { CircleAlert, Star, StarHalf } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-export default function PropertyHeader({
-  property,
-  is_loading,
-}: {
-  property?: Property;
-  is_loading: boolean;
-}) {
-  const router = useRouter();
+export default function PropertyHeader() {
+  const user_location = useUserLocation();
+  const params = useParams<{ id: string }>();
+  const from = useSearchParams().get("from");
+  const { data } = useQuery<Property>({
+    enabled: !!user_location,
+    queryKey: ["property", params.id, user_location],
+  });
 
   return (
     <header className="grid w-full">
-      <Button
-        size="sm"
-        className="justify-self-end"
-        onClick={() => router.back()}
-      >
-        Go Back
-      </Button>
+      <Link href={from ? from : "/nearby"}>
+        <Button
+          size="sm"
+          className="justify-self-end"
+        >
+          Go Back
+        </Button>
+      </Link>
       <div className="space-y-4">
         <span className="space-y-1">
           <h1
             className={cn(
               "text-3xl font-bold",
-              is_loading && "animate-pulse bg-muted rounded-lg w-1/2 h-10"
+              !data && "animate-pulse bg-muted rounded-lg w-1/2 h-10"
             )}
           >
-            {property?.name}
+            {data?.name}
           </h1>
           <h2
             className={cn(
               "text-muted-foreground",
-              is_loading && "animate-pulse bg-muted rounded-lg w-1/3 h-6"
+              !data && "animate-pulse bg-muted rounded-lg w-1/3 h-6"
             )}
           >
-            {property?.address.vicinity}
+            {data?.address.vicinity}
           </h2>
         </span>
         <div className="flex items-center space-x-4 font-medium">
@@ -47,8 +50,8 @@ export default function PropertyHeader({
             {Array.from({
               length: 5,
             }).map((_, index) =>
-              Math.floor(property?.rating!) === index + 1 ? (
-                Math.floor(property?.rating!) !== property?.rating! ? (
+              Math.floor(data?.rating!) === index + 1 ? (
+                Math.floor(data?.rating!) !== data?.rating! ? (
                   <span key={index} className="relative">
                     <StarHalf className="fill-primary h-5 w-auto stroke" />
                     <Star className="absolute h-5 w-auto top-0 left-0" />
@@ -61,7 +64,7 @@ export default function PropertyHeader({
                   key={index}
                   className={cn(
                     "h-5 w-auto  fill-muted",
-                    index + 1 < property?.rating!
+                    index + 1 < data?.rating!
                       ? "fill-primary"
                       : "stroke-muted-foreground"
                   )}
@@ -69,27 +72,25 @@ export default function PropertyHeader({
               )
             )}
           </div>
-          <p className="flex">
+          <p className="flex gap-1">
             <span
               className={cn(
-                is_loading &&
-                  "w-8 h-6 bg-muted animate-pulse rounded-lg text-center"
+                !data && "w-8 h-6 bg-muted animate-pulse rounded-lg text-center"
               )}
             >
-              {property?.rating!}
+              {data?.rating!}
             </span>
             {"("}
             <span
               className={cn(
-                is_loading &&
-                  "w-8 h-6 bg-muted animate-pulse rounded-lg text-center"
+                !data && "w-8 h-6 bg-muted animate-pulse rounded-lg text-center"
               )}
             >
-              {property?.reviews.length}
+              {data?.reviews.length}
             </span>
             reviews {")"}
           </p>
-          {property?.provider === "DB" && <CircleAlert className="h-4" />}
+          {data?.provider === "DB" && <CircleAlert className="h-4" />}
         </div>
       </div>
     </header>

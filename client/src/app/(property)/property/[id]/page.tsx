@@ -6,17 +6,18 @@ import OutOfBound from "@/components/page/error/OutOfBound";
 import PropertyDetails from "@/components/page/property/PropertyDetails";
 import PropertyHeader from "@/components/page/property/PropertyHeader";
 import PropertyImage from "@/components/page/property/PropertyImage";
+import PropertyMap from "@/components/page/property/PropertyMap";
 import { GETRequest } from "@/lib/server/fetch";
 import { Property } from "@/lib/types/data-type";
 import { useQuery } from "@tanstack/react-query";
-import { toast }  from "sonner";
+import { toast } from "sonner";
 
 export default function Page({ params }: { params: { id: string } }) {
   const user_location = useUserLocation();
 
-  const { data, error } = useQuery({
+  const {  error } = useQuery({
     enabled: !!user_location,
-    queryKey: ["data", params.id, user_location],
+    queryKey: ["property", params.id, user_location],
     queryFn: async () => {
       try {
         const { data, status, message } = await GETRequest<Property>(
@@ -40,17 +41,18 @@ export default function Page({ params }: { params: { id: string } }) {
     },
   });
 
-  const isLoading = true;
   if (error?.message === "OUT_OF_BOUND") return <OutOfBound />;
+  2;
   if (user_location?.error === "LOCATION_NONE") return <LocationNone />;
   if (user_location?.error === "PERMISSION_DENIED") return <PermissionDenied />;
   return (
     <main className="relative w-screen py-12 px-10 space-y-8">
-      <PropertyHeader property={data} is_loading={isLoading} />
+      <PropertyHeader />
       <div className="flex space-x-4">
-        <PropertyDetails property={data} is_loading={isLoading} />
-        <PropertyImage property={data} is_loading={isLoading} />
+        <PropertyDetails />
+        <PropertyImage />
       </div>
+      <PropertyMap />
     </main>
   );
 }
