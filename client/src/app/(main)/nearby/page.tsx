@@ -1,27 +1,24 @@
 "use client";
-import UserLocation from "@/components/page/UserLocation";
 import { Property } from "@/lib/types/data-type";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import LodgingCardsSkeleton from "@/components/page/loading-skeleton/LodgingCardsSkeleton";
 import PropertyCard from "@/components/page/PropertyCard";
 import PageFilter from "@/components/page/nearby/filter/PageFilter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import LoadingSvg from "@/components/svg/LoadingSvg";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { GETRequest } from "@/lib/server/fetch";
 import OutOfBound from "@/components/page/error/OutOfBound";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import ListSort from "@/components/page/nearby/sort/ListSort";
-
-type C = {
-  lat: number;
-  lng: number;
-} | null;
+import LocationNone from "@/components/page/error/location/LocationNone";
+import PermissionDenied from "@/components/page/error/location/PermissionDenied";
+import useUserLocation from "@/components/hooks/useUserLocation";
 
 export default function Page() {
-  const [user_location, setUserLocation] = useState<C>(null);
+  const user_location = useUserLocation();
 
   const distance = useSearchParams().get("distance");
   const property_type = useSearchParams().get("type");
@@ -32,7 +29,7 @@ export default function Page() {
   const { data, error, isFetching, fetchNextPage, hasNextPage } =
     useInfiniteQuery({
       enabled: !!user_location,
-      queryKey: ["nearby_properties", distance],
+      queryKey: ["nearby_properties", distance, user_location],
       queryFn: async ({ pageParam }) => {
         const {
           data: response,
@@ -42,8 +39,8 @@ export default function Page() {
           result: Property[];
           next_page: number | null;
         }>("/v1/property/nearby", {
-          latitude: user_location?.lat.toString()!,
-          longitude: user_location?.lng.toString()!,
+          latitude: user_location?.coordinates?.lat.toString()!,
+          longitude: user_location?.coordinates?.lng.toString()!,
           page: pageParam.toString(),
           max_distance: distance ? distance : "500",
         });
@@ -105,29 +102,27 @@ export default function Page() {
     return new_data;
   }, [data, property_type, amenities, name_sort, distance_sort]);
 
+  if (user_location?.error === "LOCATION_NONE") return <LocationNone />;
+  if (user_location?.error === "PERMISSION_DENIED") return <PermissionDenied />;
+  if (error?.message === "OUT_OF_BOUND") return <OutOfBound />;
   return (
     <main className="grid grid-rows-[auto_1fr_auto] sm:px-[10vw] py-8 space-y-8 scroll-smooth">
       <div className="flex items-center mx-5 space-x-1">
         <PageFilter />
         <ListSort />
       </div>
-      {error?.message === "OUT_OF_BOUND" ? (
-        <OutOfBound />
-      ) : (
-        <UserLocation coordinates={(c) => setUserLocation(c)}>
-          <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
-            {filtered_data ? (
-              filtered_data.map((page) =>
-                page.result.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
-                ))
-              )
-            ) : (
-              <LodgingCardsSkeleton />
-            )}
-          </section>
-        </UserLocation>
-      )}
+
+      <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
+        {filtered_data ? (
+          filtered_data.map((page) =>
+            page.result.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))
+          )
+        ) : (
+          <LodgingCardsSkeleton />
+        )}
+      </section>
       <Button
         className={cn(
           "w-fit justify-self-center rounded-full",
