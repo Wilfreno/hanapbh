@@ -19,13 +19,8 @@ export default function PropertyHeader() {
 
   return (
     <header className="grid w-full">
-      <Link href={from ? from : "/nearby"}>
-        <Button
-          size="sm"
-          className="justify-self-end"
-        >
-          Go Back
-        </Button>
+      <Link href={from ? from : "/nearby"} className="justify-self-end" >
+        <Button size="sm">Go Back</Button>
       </Link>
       <div className="space-y-4">
         <span className="space-y-1">
@@ -47,7 +42,7 @@ export default function PropertyHeader() {
           </h2>
         </span>
         <div className="flex items-center space-x-4 font-medium">
-          <RateStar rating={data?.rating!}/>
+          <RateStar rating={data?.rating!} />
           <p className="flex gap-1">
             <span
               className={cn(
