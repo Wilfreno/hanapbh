@@ -1,3 +1,8 @@
+export type LocationType = {
+  longitude: number;
+  latitude: number;
+};
+
 /**
  * Calculates the distance between two geographic locations in meters using the Haversine formula.
  *
@@ -6,16 +11,10 @@
  * @returns {number} The distance between the two locations in meters.
  *
  */
-
-export type LocationType = {
-  longitude: number;
-  latitude: number;
-};
-
 export default function getDistance(
   location_1: LocationType,
   location_2: LocationType
-) {
+): number {
   const earth_radius_km = 6371;
 
   const latitude_radians_1 = (Math.PI / 180) * location_1.latitude;
@@ -36,5 +35,5 @@ export default function getDistance(
 
   const distance = earth_radius_km * c;
 
-  return distance * 1000;
+  return distance;
 }

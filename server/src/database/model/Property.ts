@@ -5,6 +5,7 @@ export type PropertyType = {
   name: string;
   type?: "BOARDING_HOUSE" | "BED_SPACER" | "APARTMENT" | "PAD";
   description: string;
+  house_rules: string[];
   amenities: (
     | "FREE_WATER"
     | "FREE_WIFI"
@@ -23,6 +24,7 @@ export type PropertyType = {
     type: "Point";
     coordinates: [number, number];
   };
+  rating: number;
   distance: number;
   address: {
     vicinity: string;
@@ -31,7 +33,7 @@ export type PropertyType = {
     municipality_city: string;
     barangay: string;
   };
-  provider: string;
+  provider: "GOOGLE" | "DB";
   photos: Types.ObjectId[];
   reviews: Types.ObjectId[];
   rooms: Types.ObjectId[];
@@ -47,6 +49,7 @@ const propertySchema = new Schema<PropertyType>(
     },
     name: {
       type: String,
+      unique: true,
       required: true,
     },
 
@@ -59,10 +62,29 @@ const propertySchema = new Schema<PropertyType>(
       type: String,
       default: "",
     },
+    house_rules: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
     amenities: [
       {
         type: String,
-        enum: ["WATER", "WIFI", "COMFORT_ROOM", "LAUNDRY_AREA", "KITCHEN_AREA"],
+        enum: [
+          "FREE_WATER",
+          "FREE_WIFI",
+          "FREE_ELECTRICITY",
+          "LAUNDRY_AREA",
+          "KITCHEN_AREA",
+          "AIR_CONDITION",
+          "PRIVATE_BATHROOM",
+          "COMMON_BATHROOM",
+          "TELEVISION",
+          "LOCKERS",
+          "CCTV",
+          "PARKING_LOT",
+        ],
         default: [],
       },
     ],
@@ -88,7 +110,7 @@ const propertySchema = new Schema<PropertyType>(
         default: "",
       },
       province: {
-        type: String,
+        type: String, 
         default: "",
       },
       municipality_city: {
@@ -100,8 +122,10 @@ const propertySchema = new Schema<PropertyType>(
         default: "",
       },
     },
+
     provider: {
       type: String,
+      enum: ["GOOGLE", "DB"],
       default: "DB",
     },
     rooms: [{ type: Schema.Types.ObjectId, ref: "Room", default: [] }],

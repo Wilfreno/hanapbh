@@ -16,8 +16,9 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
-export default function HeaderDropdownMenuMobile() {
+export default function HeaderMobileAsideMenu() {
   const { status, data } = useSession();
   const pathname = usePathname();
 
@@ -70,8 +71,16 @@ export default function HeaderDropdownMenuMobile() {
           <>
             <Link
               className="flex items-center gap-4 text-foreground font-bold"
-              href={"/login?exit=" + pathname}
-              as={"/login?exit=" + pathname}
+              href={
+                pathname.startsWith("/demo")
+                  ? "/demo/login?exit=" + pathname
+                  : "/login?exit=" + pathname
+              }
+              as={
+                pathname.startsWith("/demo")
+                  ? "/demo/login?exit=" + pathname
+                  : "/login?exit=" + pathname
+              }
               prefetch
             >
               <LogIn className="h-5 w-5" />
@@ -79,7 +88,11 @@ export default function HeaderDropdownMenuMobile() {
             </Link>
             <Link
               className="flex items-center gap-4 text-muted-foreground hover:text-foreground"
-              href={"/sign-up?exit=" + pathname}
+              href={
+                pathname.startsWith("/demo")
+                  ? "/demo/sign-up?exit=" + pathname
+                  : "/sign-up?exit=" + pathname
+              }
               as={"/sign-up?exit=" + pathname}
               prefetch
             >
@@ -96,8 +109,7 @@ export default function HeaderDropdownMenuMobile() {
               </AvatarFallback>
             </Avatar>
             <span className="flex items-center space-x-1  font-semibold whitespace-normal truncate">
-              <p className="truncate">{data?.user.first_name}</p>
-              <p className="truncate">{data?.user.last_name}</p>
+              {data?.user.first_name}
             </span>
           </div>
         )}

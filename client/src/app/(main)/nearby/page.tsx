@@ -1,200 +1,137 @@
 "use client";
-import useHTTPRequest from "@/components/hooks/useHTTPRequest";
-import UserLocation from "@/components/page/UserLocation";
 import { Property } from "@/lib/types/data-type";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import LodgingCardsSkeleton from "@/components/page/loading-skeleton/LodgingCardsSkeleton";
 import PropertyCard from "@/components/page/PropertyCard";
-import ListFilter from "@/components/page/ListFilter";
-import ListSort from "@/components/page/ListSort";
+import PageFilter from "@/components/page/nearby/filter/PageFilter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import LoadingSvg from "@/components/svg/LoadingSvg";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { GETRequest } from "@/lib/server/fetch";
+import OutOfBound from "@/components/page/error/location/OutOfBound";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import ListSort from "@/components/page/nearby/sort/ListSort";
+import LocationNone from "@/components/page/error/location/LocationNone";
+import PermissionDenied from "@/components/page/error/location/PermissionDenied";
+import useUserLocation from "@/components/hooks/useUserLocation";
 
 export default function Page() {
-  const [loading, setLoading] = useState({ initial: true, refetching: false });
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [modified_list, setModifiedList] = useState<Property[]>([]);
-  const [page, setPage] = useState<number | null>(1);
-  const [filter, setFilter] = useState({
-    distance: 500,
-    property_type: new Map(),
-    amenities: new Map(),
-  });
-  const [sort, setSort] = useState({ name: "", distance: "ascend" });
+  const user_location = useUserLocation();
 
-  const lng = useSearchParams().get("lng");
-  const lat = useSearchParams().get("lat");
+  const distance = useSearchParams().get("distance");
+  const property_type = useSearchParams().get("type");
+  const amenities = useSearchParams().get("am");
+  const name_sort = useSearchParams().get("name_sort");
+  const distance_sort = useSearchParams().get("distance_sort");
 
-  const http_request = useHTTPRequest();
+  const { data, error, isFetching, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      enabled: !!user_location,
+      queryKey: ["nearby_properties", distance, user_location],
+      queryFn: async ({ pageParam }) => {
+        const {
+          data: response,
+          status,
+          message,
+        } = await GETRequest<{
+          result: Property[];
+          next_page: number | null;
+        }>("/v1/property/nearby", {
+          latitude: user_location?.coordinates?.lat.toString()!,
+          longitude: user_location?.coordinates?.lng.toString()!,
+          page: pageParam.toString(),
+          max_distance: distance ? distance : "500",
+        });
 
-  async function getNearbyProperties() {
-    try {
-      const { data } = await http_request.GET("/v1/property/nearby", {
-        latitude: lat,
-        longitude: lng,
-        page,
-        max_distance: filter.distance,
-      });
-      setProperties((prev) => [...prev, ...(data as Property[])]);
-      if (!(data as Property[]).length) setPage(null);
-    } catch (error) {
-      throw error;
-    }
-  }
+        if (status !== "OK") {
+          toast.warning(message);
+          throw new Error(status);
+        }
+        return response;
+      },
+      initialPageParam: 1,
+      getNextPageParam: (data) => data!.next_page,
+    });
 
-  useEffect(() => {
-    if (!lat || !lng) return;
-    async function initialFetch() {
-      setLoading((prev) => ({ ...prev, initial: true }));
+  const filtered_data = useMemo(() => {
+    let new_data = data?.pages;
 
-      await getNearbyProperties();
-      setLoading((prev) => ({ ...prev, initial: false }));
-    }
-    initialFetch();
-  }, [lat, lng]);
-
-  useEffect(() => {
-    if (page === 1) return;
-    async function reFetch() {
-      setLoading((prev) => ({ ...prev, refetching: true }));
-      await getNearbyProperties();
-      setLoading((prev) => ({ ...prev, refetching: false }));
-    }
-    reFetch();
-  }, [page]);
-
-  useEffect(() => {
-    if (!properties.length) return;
-    if (!filter.distance) return;
-    if (
-      filter.distance === 100 ||
-      filter.distance === 200 ||
-      filter.distance === 300 ||
-      filter.distance === 400 ||
-      filter.distance === 500
-    ) {
-      setModifiedList(properties.filter((p) => p.distance <= filter.distance));
-      return;
-    }
-    getNearbyProperties();
-  }, [filter.distance, properties]);
-
-  useEffect(() => {
-    if (!properties.length) return;
-
-    if (filter.property_type.size)
-      setModifiedList((prev) =>
-        prev.filter((property) => filter.property_type.has(property.type!))
-      );
-    if (filter.amenities.size) {
-      setModifiedList((prev) =>
-        prev.filter((property) => {
-          const l = [];
-          filter.amenities.forEach((value) => {
-            if (property.amenities.find(value as any)) {
-              return true;
-            }
-          });
-        })
-      );
+    if (property_type) {
+      new_data = new_data!.map((data) => ({
+        ...data,
+        result: data.result.filter((result) =>
+          property_type.split("|").some((type) => type === result.type)
+        ),
+      }));
     }
 
-    if (!filter.property_type.size && !filter.amenities.size)
-      setModifiedList([]);
-  }, [filter.amenities, filter.property_type, properties]);
-
-  useEffect(() => {
-    if (!properties.length) return;
-
-    if (!sort.name) return;
-
-    switch (sort.name) {
-      case "ascend": {
-        modified_list.length
-          ? setModifiedList((prev) =>
-              prev.toSorted((a, b) => a.name.localeCompare(b.name))
-            )
-          : setProperties((prev) =>
-              prev.toSorted((a, b) => a.name.localeCompare(b.name))
-            );
-        break;
-      }
-      case "descend": {
-        modified_list.length
-          ? setModifiedList((prev) =>
-              prev.toSorted((a, b) => b.name.localeCompare(a.name))
-            )
-          : setProperties((prev) =>
-              prev.toSorted((a, b) => b.name.localeCompare(a.name))
-            );
-        break;
-      }
-      default:
-        break;
+    if (amenities) {
+      new_data = new_data?.map((data) => ({
+        ...data,
+        result: data.result.filter((result) =>
+          result.amenities.some((am) =>
+            amenities.split("|").some((a) => a === am)
+          )
+        ),
+      }));
     }
-  }, [sort.name]);
 
-  useEffect(() => {
-    if (!properties.length) return;
-
-    switch (sort.distance) {
-      case "ascend": {
-        modified_list.length
-          ? setModifiedList((prev) =>
-              prev.toSorted((a, b) => a.distance - b.distance)
-            )
-          : setProperties((prev) =>
-              prev.toSorted((a, b) => a.distance - b.distance)
-            );
-        break;
-      }
-      case "descend": {
-        modified_list.length
-          ? setModifiedList((prev) =>
-              prev.toSorted((a, b) => b.distance - a.distance)
-            )
-          : setProperties((prev) =>
-              prev.toSorted((a, b) => b.distance - a.distance)
-            );
-        break;
-      }
-      default:
-        break;
+    if (name_sort) {
+      new_data = new_data?.map((data) => ({
+        ...data,
+        result: data.result.toSorted((a, b) =>
+          name_sort === "z-a"
+            ? b.name.localeCompare(a.name)
+            : a.name.localeCompare(b.name)
+        ),
+      }));
     }
-  }, [sort.distance]);
 
+    if (distance_sort) {
+      new_data = new_data?.map((data) => ({
+        ...data,
+        result: data.result.toSorted((a, b) =>
+          distance_sort === "9-0"
+            ? b.distance - a.distance
+            : a.distance - b.distance
+        ),
+      }));
+    }
+    return new_data;
+  }, [data, property_type, amenities, name_sort, distance_sort]);
+
+  if (user_location?.error === "LOCATION_NONE") return <LocationNone />;
+  if (user_location?.error === "PERMISSION_DENIED") return <PermissionDenied />;
+  if (error?.message === "OUT_OF_BOUND") return <OutOfBound />;
   return (
     <main className="grid grid-rows-[auto_1fr_auto] sm:px-[10vw] py-8 space-y-8 scroll-smooth">
       <div className="flex items-center mx-5 space-x-1">
-        <ListFilter filter={filter} setFilter={setFilter} />
-        <ListSort sort={sort} setSort={setSort} />
+        <PageFilter />
+        <ListSort />
       </div>
-      <UserLocation>
-        <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
-          {loading.initial ? (
-            <LodgingCardsSkeleton />
-          ) : modified_list.length ? (
-            modified_list.map((property) => (
-              <PropertyCard key={property.name} property={property} />
-            ))
-          ) : (
-            properties.map((property) => (
+
+      <section className="grid grid-cols-1 gap-2 sm:grid-cols-4 sm:gap-4 scroll-smooth">
+        {filtered_data ? (
+          filtered_data.map((page) =>
+            page.result.map((property) => (
               <PropertyCard key={property.id} property={property} />
             ))
-          )}
-        </section>
-      </UserLocation>
+          )
+        ) : (
+          <LodgingCardsSkeleton />
+        )}
+      </section>
       <Button
         className={cn(
           "w-fit justify-self-center rounded-full",
-          !page || (loading.initial && "hidden")
+          (!hasNextPage || !user_location) && "hidden"
         )}
         variant="ghost"
-        onClick={() => setPage((prev) => prev! + 1)}
+        onClick={() => fetchNextPage()}
       >
-        {loading.refetching ? (
+        {isFetching ? (
           <LoadingSvg className="h-8 w-auto fill-primary" />
         ) : (
           "Load More"

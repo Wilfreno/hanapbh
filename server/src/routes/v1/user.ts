@@ -15,13 +15,10 @@ export default function userV1Router(
   done: () => void
 ) {
   //create route
-  fastify.post<{ Body: UserType & { photo: PhotoType } }>(
+  fastify.post<{ Body: UserType & { provider: "GOOGLE" } }>(
     "/",
     async (request, reply) => {
       try {
-        const session = await startSession();
-        session.startTransaction();
-
         const user = request.body;
 
         const found_email = await User.findOne({ email: user.email });
@@ -31,17 +28,21 @@ export default function userV1Router(
             .code(409)
             .send(JSONResponse("CONFLICT", "email already used"));
 
-        let password = "";
+        let password: string | null = null;
 
-        if (user.password) {
+        if (!user.provider) {
+          if (!user.password)
+            return reply
+              .code(400)
+              .send(JSONResponse("BAD_REQUEST", "password is required"));
           password = await hash(user.password, 14);
         }
 
-        const new_user = new User<UserType>({
+        const new_user = new User({
           email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
-          password: password ? password : null,
+          password,
           birthday: user.birthday ? user.birthday : undefined,
           gender: user.gender
             ? { type: user.gender.type, other: user.gender.other }
@@ -49,23 +50,7 @@ export default function userV1Router(
           last_updated: new Date(),
         });
 
-        await new_user.save({ session });
-
-        const new_photo = new Photo<PhotoType>({
-          user: new_user._id!,
-          url: user.photo.url,
-          height: user.photo.height,
-          width: user.photo.width,
-          last_updated: new Date(),
-          type: "PROFILE",
-        });
-
-        await new_photo.save({ session });
-        new_user.photo = new_photo._id;
-        await new_user.save({ session });
-
-        await session.commitTransaction();
-        await session.endSession();
+        await new_user.save();
 
         return reply
           .code(201)
@@ -138,45 +123,24 @@ export default function userV1Router(
     }
   );
   //read route
-  fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    try {
-      const user_id = request.params.id;
-
-      const found_user = await User.findOne({ _id: user_id })
-        .select("-password")
-        .populate("photo");
-
-      if (!found_user)
-        return reply
-          .code(404)
-          .send(JSONResponse("NOT_FOUND", "user does not exist"));
-
-      return reply
-        .code(200)
-        .send(
-          JSONResponse(
-            "OK",
-            "request successful",
-            exclude(found_user.toJSON(), ["password"])
-          )
-        );
-    } catch (error) {
-      fastify.log.error(error);
-      return reply
-        .code(500)
-        .send(
-          JSONResponse("INTERNAL_SERVER_ERROR", "oops! something went wrong")
-        );
-    }
-  });
-  fastify.get<{ Params: { email: string } }>(
-    "/email/:email",
+  fastify.get<{ Params: { user: string } }>(
+    "/:user",
     async (request, reply) => {
       try {
-        const user_email = request.params.email;
+        const { user } = request.params;
+
+        if (!user.startsWith("@"))
+          reply
+            .code(400)
+            .send(
+              JSONResponse("BAD_REQUEST", "request parameter must start with @")
+            );
 
         const found_user = await User.findOne({
-          email: user_email.toLowerCase(),
+          email: {
+            $regex: "^" + user.substring(1).toLowerCase(),
+            $options: "i",
+          },
         })
           .select("-password")
           .populate("photo");
@@ -188,13 +152,7 @@ export default function userV1Router(
 
         return reply
           .code(200)
-          .send(
-            JSONResponse(
-              "OK",
-              "request successful",
-              exclude(found_user.toJSON(), ["password"])
-            )
-          );
+          .send(JSONResponse("OK", "request successful", found_user.toJSON()));
       } catch (error) {
         fastify.log.error(error);
         return reply
@@ -363,14 +321,14 @@ export default function userV1Router(
     }
   );
   //update route
-  fastify.get<{
+  fastify.patch<{
     Params: { key: keyof UserType };
     Body: Omit<UserType, "photo"> & {
       pin: string;
       id: string;
       photo: PhotoType;
     };
-  }>("/key", async (request, reply) => {
+  }>("/:key", async (request, reply) => {
     try {
       const { key } = request.params;
       const {
@@ -387,20 +345,21 @@ export default function userV1Router(
         pin,
       } = request.body;
 
-      if (!id)
+      if (!id) {
         return reply
           .code(400)
           .send(
             JSONResponse("BAD_REQUEST", "id is required on the request body")
           );
+      }
 
       const found_user = await User.findOne({ _id: id });
 
-      if (!found_user)
+      if (!found_user) {
         return reply
           .code(404)
           .send(JSONResponse("NOT_FOUND", "user not found"));
-
+      }
       switch (key) {
         case "email": {
           if (!email)
@@ -583,7 +542,13 @@ export default function userV1Router(
                 )
               );
 
-          const new_photo = new Photo(photo);
+          const new_photo = new Photo({
+            user: found_user._id,
+            url: photo.url,
+            type: "PROFILE",
+          });
+
+          await new_photo.save();
           await User.updateOne(
             { _id: id },
             { $set: { photo: new_photo, last_updated: new Date() } }
@@ -602,13 +567,19 @@ export default function userV1Router(
             );
       }
 
-      const new_user = User.findOne({ _id: id })
+      const new_user = await User.findOne({ _id: id })
         .select("-password")
-        .populate("photos");
+        .populate("photo");
 
       return reply
         .code(200)
-        .send(JSONResponse("OK", "user " + key + "has been updated", new_user));
+        .send(
+          JSONResponse(
+            "OK",
+            "user " + key + " has been updated",
+            new_user!.toJSON()
+          )
+        );
     } catch (error) {
       fastify.log.error(error);
       return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));

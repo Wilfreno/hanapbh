@@ -35,7 +35,9 @@
 
 # Website 
 
-:globe_with_meridians: <https://hanapbh.vercel.app/>
+:warning: The main page is  using [Google Places API](https://developers.google.com/maps/documentation/places/web-service/overview) as a temporary data provider. As a result, the property details are limited.
+
+:globe_with_meridians: <https://hanapbh.vercel.app/nearby>
 
 # Features
 

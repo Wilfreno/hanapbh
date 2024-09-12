@@ -5,6 +5,10 @@ import { FastifyInstance, FastifyPluginOptions } from "fastify";
 import { Document, startSession, Types } from "mongoose";
 import getDistance from "../../lib/distance";
 import exclude from "../../lib/exclude";
+import {
+  getNearbyProperty,
+  getPropertyDetails,
+} from "../../lib/google-places-api";
 
 export default function property_v1_router(
   fastify: FastifyInstance,
@@ -40,8 +44,6 @@ export default function property_v1_router(
           type: "property",
           property: new_property._id,
           url: photo.url,
-          height: photo.height,
-          width: photo.width,
           last_updated: new Date(),
         });
         await new_photo.save({ session });
@@ -66,124 +68,225 @@ export default function property_v1_router(
 
   //read routes
 
-  fastify.get<{ Querystring: Record<string, string> }>(
-    "/nearby",
-    async (request, reply) => {
-      try {
-        const { latitude, longitude } = request.query;
-        const { page, max_distance } = request.query;
+  fastify.get<{
+    Querystring: Record<
+      "latitude" | "longitude" | "page" | "max_distance",
+      string
+    >;
+  }>("/nearby", async (request, reply) => {
+    try {
+      const { latitude, longitude } = request.query;
+      const { page, max_distance } = request.query;
 
-        if (!page || !max_distance)
-          return reply
-            .code(400)
-            .send(
-              JSONResponse(
-                "BAD_REQUEST",
-                "page and max_distance is required as a query parameters"
-              )
-            );
-
-        if (!Number(page) || !Number(max_distance))
-          return reply
-            .code(400)
-            .send(
-              JSONResponse(
-                "BAD_REQUEST",
-                "page and max_distance value must be a number"
-              )
-            );
-
-        const skip = 20 * (Number(page) - 1);
-
-        const database_properties = (await Property.aggregate([
-          {
-            $geoNear: {
-              near: {
-                type: "Point",
-                coordinates: [Number(longitude), Number(latitude)],
-              },
-              distanceField: "distance",
-              maxDistance: Number(max_distance),
-              spherical: true,
-            },
-          },
-          {
-            $skip: skip,
-          },
-          {
-            $limit: 20,
-          },
-          {
-            $lookup: {
-              from: "photos",
-              as: "photos",
-              localField: "photos",
-              foreignField: "_id",
-            },
-          },
-        ])) as
-          | (Document<unknown, {}, PropertyType> &
-              PropertyType & {
-                _id: Types.ObjectId;
-              })[]
-          | null;
-
-        return reply.code(200).send(
-          JSONResponse(
-            "OK",
-            "request successful",
-            database_properties
-              ? database_properties.map((l) => ({
-                  ...exclude({ id: l._id, ...l }, ["_id"]),
-                  distance: getDistance(
-                    {
-                      latitude: Number(latitude),
-                      longitude: Number(longitude),
-                    },
-                    {
-                      latitude: l.location.coordinates[1],
-                      longitude: l.location.coordinates[0],
-                    }
-                  ),
-                }))
-              : []
-          )
-        );
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
-      }
-    }
-  );
-
-  fastify.get<{ Querystring: { id: string } }>(
-    "/:id",
-    async (request, reply) => {
-      try {
-        const { id } = request.query;
-
-        const found_property = await Property.findOne({ _id: id }).populate([
-          "photos",
-          "rooms",
-          "reviews",
-        ]);
-
-        if (!found_property)
-          return reply
-            .code(404)
-            .send(JSONResponse("NOT_FOUND", "property not found"));
-
+      if (!longitude || !latitude)
         return reply
-          .code(200)
+          .code(400)
           .send(
-            JSONResponse("OK", "request successful", found_property.toJSON())
+            JSONResponse(
+              "BAD_REQUEST",
+              "longitude and latitude is required as query parameters to determine distance"
+            )
           );
-      } catch (error) {
-        fastify.log.error(error);
-        return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
-      }
+
+      if (!page || !max_distance)
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "page and max_distance is required as a query parameters"
+            )
+          );
+
+      if (!Number(page) || !Number(max_distance))
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "page and max_distance value must be a number"
+            )
+          );
+
+      const skip = 20 * (Number(page) - 1);
+
+      const database_properties = await Property.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [Number(longitude), Number(latitude)],
+            },
+            distanceField: "distance",
+            maxDistance: Number(max_distance),
+            spherical: true,
+          },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: 20,
+        },
+        {
+          $lookup: {
+            from: "photos",
+            as: "photos",
+            localField: "photos",
+            foreignField: "_id",
+            pipeline: [
+              {
+                $project: {
+                  id: "$_id",
+                  _id: false,
+                  url: true,
+                  type: true,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            as: "owner",
+            localField: "owner",
+            foreignField: "_id",
+            pipeline: [
+              {
+                $lookup: {
+                  from: "photos",
+                  as: "photo",
+                  localField: "photo",
+                  foreignField: "_id",
+                  pipeline: [
+                    {
+                      $project: {
+                        id: "$_id",
+                        _id: false,
+                        url: true,
+                        type: true,
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                $unwind: {
+                  path: "$photo",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $project: {
+                  id: "$_id",
+                  _id: false,
+                  first_name: true,
+                  middle_name: true,
+                  last_name: true,
+                  email: true,
+                  photo: true,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: "$owner",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+
+        {
+          $project: {
+            owner: true,
+            id: "$_id",
+            name: true,
+            type: true,
+            amenities: true,
+            location: true,
+            address: true,
+            provider: true,
+            photos: true,
+            distance: true,
+          },
+        },
+      ]);
+
+      const nearby_places_api_result = await getNearbyProperty({
+        latitude,
+        longitude,
+      });
+      return reply.code(200).send(
+        JSONResponse("OK", "request successful", {
+          result: database_properties
+            ? database_properties
+                .map((l) => ({
+                  ...exclude({ id: l._id, ...l }, ["_id"]),
+                }))
+                .concat(nearby_places_api_result)
+            : [],
+          next_page:
+            database_properties!.length >= 20 ? Number(page) + 1 : null,
+        })
+      );
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
     }
-  );
+  });
+
+  fastify.get<{
+    Params: { id: string };
+    Querystring: Record<"longitude" | "latitude", string>;
+  }>("/:id", async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { longitude, latitude } = request.query;
+
+      if (!longitude || !latitude)
+        return reply
+          .code(400)
+          .send(
+            JSONResponse(
+              "BAD_REQUEST",
+              "longitude and latitude is required as query parameters to determine distance"
+            )
+          );
+      let found_property = null;
+
+      if (!Types.ObjectId.isValid(id)) {
+        found_property = await getPropertyDetails(id);
+      } else {
+        const p = await Property.findOne({
+          _id: id,
+        }).populate(["photos", "rooms", "reviews"]);
+        found_property = p!.toJSON();
+      }
+
+      if (!found_property)
+        return reply
+          .code(404)
+          .send(JSONResponse("NOT_FOUND", "property not found"));
+
+      return reply.code(200).send(
+        JSONResponse("OK", "request successful", {
+          ...found_property,
+          distance: getDistance(
+            { latitude: Number(latitude), longitude: Number(longitude) },
+            {
+              longitude: found_property.location.coordinates[0],
+              latitude: found_property.location.coordinates[1],
+            }
+          ),
+        })
+      );
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send(JSONResponse("INTERNAL_SERVER_ERROR"));
+    }
+  });
 
   //update routes
 
@@ -355,8 +458,6 @@ export default function property_v1_router(
                 type: "PROPERTY",
                 url: photo.url,
                 property: found_property._id,
-                width: photo.width,
-                height: photo.height,
                 last_updated: new Date(),
               })
             );

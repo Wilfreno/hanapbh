@@ -20,7 +20,10 @@
     "nodenext",
     "noreply",
     "sigstore",
-    "tsbuildinfo"
+    "tailwindcss",
+    "tanstack",
+    "tsbuildinfo",
+    "Uploadthing"
   ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnPaste": true,

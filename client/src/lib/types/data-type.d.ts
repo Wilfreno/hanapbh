@@ -31,11 +31,11 @@ export type User = {
 };
 
 export type Property = {
-  id: string
+  id: string;
   owner?: User;
   name: string;
   type?: "BOARDING_HOUSE" | "BED_SPACER" | "APARTMENT" | "PAD";
-  description: string;
+  description: string[];
   amenities: (
     | "FREE_WATER"
     | "FREE_WIFI"
@@ -50,10 +50,14 @@ export type Property = {
     | "CCTV"
     | "PARKING_LOT"
   )[];
+  occupancies: Occupant[];
+  activities: Activity[];
+
   location: {
     type: "Point";
     coordinates: [number, number];
   };
+  rating: number;
   distance: number;
   address: {
     vicinity: string;
@@ -62,23 +66,47 @@ export type Property = {
     municipality_city: string;
     barangay: string;
   };
-  provider: string;
-  photos: Types.ObjectId[];
-  reviews: Types.ObjectId[];
-  rooms: Types.ObjectId[];
+  provider: "GOOGLE" | "DB";
+  photos: Photo[];
+  reviews: Review[];
+  rooms: Room[];
   date_created: Date;
-  last_updated: Date;
+  last_updated?: Date;
 };
 
 export type Photo = {
-  id: string;
   url: string;
-  type?: "PROFILE" | "LODGING" | "ROOM";
-  width: number;
-  height: number;
-  user?: string;
-  lodging?: string;
-  room?: string;
+  type?: "PROFILE" | "PROPERTY" | "ROOM";
+  user?: User;
+  property?: Property;
+  room?: Room;
   date_created?: Date;
-  last_updated: Date;
+  last_updated?: Date;
+};
+
+export type Review = {
+  reviewer: User;
+  property: Property;
+  rate: number;
+  comment: string;
+  relative_time_description: string;
+  date_created: Date;
+  last_updated?: Date;
+};
+
+export type Occupant = {
+  room: Room;
+  user: User;
+  status: "OCCUPYING" | "LEFT";
+  joined: Date;
+  left: Date;
+};
+
+export type Activity = {
+  user: User;
+  type: "FAVORITE" | "REVIEW" | "OCCUPYING" | "LEFT";
+  favored?: Favorite;
+  reviewed?: Review;
+  occupancy?: Occupant;
+  date_created: Date;
 };

@@ -11,10 +11,14 @@ export type UserType = {
     type: "MALE" | "FEMALE" | "OTHER";
     other: string;
   };
+
   photo?: Types.ObjectId;
   properties?: Types.ObjectId[];
   reviewed?: Types.ObjectId[];
   favorites?: Types.ObjectId[];
+  bio: string;
+  occupancies: Types.ObjectId[];
+  activities: Types.ObjectId[];
   contact?: {
     phone_number: string;
     facebook: string;
@@ -39,6 +43,20 @@ const userSchema = new Schema<UserType>(
       type: String,
       required: true,
     },
+    bio: {
+      type: String,
+      default: "",
+    },
+    occupancies: [
+      { type: Schema.Types.ObjectId, ref: "Occupant", default: [] },
+    ],
+    activities: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Activity",
+        default: [],
+      },
+    ],
     email: {
       type: String,
       required: true,
@@ -95,6 +113,7 @@ const userSchema = new Schema<UserType>(
     photo: {
       type: Schema.Types.ObjectId,
       ref: "Photo",
+      default: null,
     },
     favorites: [
       {

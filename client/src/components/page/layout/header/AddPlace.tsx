@@ -6,10 +6,16 @@ export default function AddPlace() {
   const pathname = usePathname();
 
   return (
-    <Link href={"/hosting?exit=" + pathname} as={"/hosting?exit=" + pathname}>
+    <Link
+      href={
+        pathname.startsWith("/demo")
+          ? "/demo/hosting?exit=" + pathname
+          : "/hosting?exit=" + pathname
+      }
+    >
       <Button
         variant="ghost"
-        className="rounded-full text-muted-foreground mr-20 font-bold"
+        className="rounded-full text-xs text-muted-foreground font-bold"
       >
         Add your place
       </Button>
