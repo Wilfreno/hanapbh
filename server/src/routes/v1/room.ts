@@ -59,8 +59,6 @@ export default function room_v1_router(
             type: "PROPERTY",
             room: new_room._id,
             url: photo.url,
-            width: photo.width,
-            height: photo.height,
             last_updated: new Date(),
           });
 
@@ -205,10 +203,9 @@ export default function room_v1_router(
                 type: "ROOM",
                 url: photo.url,
                 room: found_room._id,
-                width: photo.width,
-                height: photo.height,
                 last_updated: new Date(),
               })
+              
             );
           }
 
