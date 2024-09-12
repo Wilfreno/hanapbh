@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CircleAlert, Star, StarHalf } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import RateStar from "./RateStar";
 
 export default function PropertyHeader() {
   const user_location = useUserLocation();
@@ -46,32 +47,7 @@ export default function PropertyHeader() {
           </h2>
         </span>
         <div className="flex items-center space-x-4 font-medium">
-          <div className="flex space-x-1">
-            {Array.from({
-              length: 5,
-            }).map((_, index) =>
-              Math.floor(data?.rating!) === index + 1 ? (
-                Math.floor(data?.rating!) !== data?.rating! ? (
-                  <span key={index} className="relative">
-                    <StarHalf className="fill-primary h-5 w-auto stroke" />
-                    <Star className="absolute h-5 w-auto top-0 left-0" />
-                  </span>
-                ) : (
-                  <Star key={index} className="fill-primary h-5 w-auto" />
-                )
-              ) : (
-                <Star
-                  key={index}
-                  className={cn(
-                    "h-5 w-auto  fill-muted",
-                    index + 1 < data?.rating!
-                      ? "fill-primary"
-                      : "stroke-muted-foreground"
-                  )}
-                />
-              )
-            )}
-          </div>
+          <RateStar rating={data?.rating!}/>
           <p className="flex gap-1">
             <span
               className={cn(

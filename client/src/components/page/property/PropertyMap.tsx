@@ -24,7 +24,7 @@ export default function PropertyMap() {
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-3xl font-bold">Where You&apos;ll be</h1>
+      <h1 className="text-2xl font-bold">Where You&apos;ll be</h1>
       <div className="aspect-video w-4/5 h-auto mx-auto rounded-lg overflow-hidden grid bg-muted relative">
         <Link
           href={"/map/" + data?.id}

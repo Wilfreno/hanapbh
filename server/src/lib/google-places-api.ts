@@ -206,10 +206,14 @@ export async function getPropertyDetails(place_id: string) {
       },
       rating: response_json.result.reviews
         ? response_json.result.reviews.length
-          ? response_json.result.reviews.reduce(
-              (current, review) => current + review.rating,
-              0
-            ) / response_json.result.reviews.length
+          ? Math.round(
+              (response_json.result.reviews.reduce(
+                (current, review) => current + review.rating,
+                0
+              ) /
+                response_json.result.reviews.length) *
+                2
+            ) / 2
           : 0
         : 0,
       reviews: response_json.result.reviews
