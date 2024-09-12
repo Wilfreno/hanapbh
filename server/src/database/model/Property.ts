@@ -4,7 +4,8 @@ export type PropertyType = {
   owner?: Types.ObjectId;
   name: string;
   type?: "BOARDING_HOUSE" | "BED_SPACER" | "APARTMENT" | "PAD";
-  description: string[];
+  description: string;
+  house_rules: string[];
   amenities: (
     | "FREE_WATER"
     | "FREE_WIFI"
@@ -57,7 +58,11 @@ const propertySchema = new Schema<PropertyType>(
       enum: ["BOARDING_HOUSE", "BED_SPACER", "APARTMENT", "PAD", ""],
       default: "",
     },
-    description: [
+    description: {
+      type: String,
+      default: "",
+    },
+    house_rules: [
       {
         type: String,
         default: [],
@@ -105,7 +110,7 @@ const propertySchema = new Schema<PropertyType>(
         default: "",
       },
       province: {
-        type: String,
+        type: String, 
         default: "",
       },
       municipality_city: {

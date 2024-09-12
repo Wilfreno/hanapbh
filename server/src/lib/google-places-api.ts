@@ -77,6 +77,7 @@ export async function getNearbyProperty({
         id: place.place_id,
         name: place.name,
         type: "BOARDING_HOUSE",
+        house_rules: [],
         amenities: [],
         photos: place.photos
           ? place.photos.map((photo) => ({
@@ -125,6 +126,7 @@ export async function getNearbyProperty({
           name: place.name,
           type: "BOARDING_HOUSE",
           amenities: [],
+          house_rules: [],
           photos: place.photos
             ? place.photos.map((photo) => ({
                 type: "PROPERTY",
@@ -196,7 +198,8 @@ export async function getPropertyDetails(place_id: string) {
         vicinity: response_json.result.vicinity,
       },
       amenities: [],
-      description: [],
+      description: "",
+      house_rules: [],
       location: {
         coordinates: [
           response_json.result.geometry.location.lng,

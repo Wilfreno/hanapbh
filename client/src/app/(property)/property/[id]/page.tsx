@@ -2,7 +2,7 @@
 import useUserLocation from "@/components/hooks/useUserLocation";
 import LocationNone from "@/components/page/error/location/LocationNone";
 import PermissionDenied from "@/components/page/error/location/PermissionDenied";
-import OutOfBound from "@/components/page/error/OutOfBound";
+import OutOfBound from "@/components/page/error/location/OutOfBound";
 import PropertyDetails from "@/components/page/property/PropertyDetails";
 import PropertyHeader from "@/components/page/property/PropertyHeader";
 import PropertyImage from "@/components/page/property/PropertyImage";
@@ -54,7 +54,7 @@ export default function Page({ params }: { params: { id: string } }) {
         <PropertyImage />
       </div>
       <PropertyMap />
-      <PropertyReview  />
+      <PropertyReview />
     </main>
   );
 }

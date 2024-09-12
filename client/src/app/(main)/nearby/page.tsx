@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import LoadingSvg from "@/components/svg/LoadingSvg";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { GETRequest } from "@/lib/server/fetch";
-import OutOfBound from "@/components/page/error/OutOfBound";
+import OutOfBound from "@/components/page/error/location/OutOfBound";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import ListSort from "@/components/page/nearby/sort/ListSort";

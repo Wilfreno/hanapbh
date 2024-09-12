@@ -1,6 +1,5 @@
+import PageOnWork from "@/components/page/error/PageOnWork";
 
 export default function page() {
-  return (
-    <div>page</div>
-  )
+  return <PageOnWork />;
 }
