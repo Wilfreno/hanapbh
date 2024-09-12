@@ -1,3 +1,18 @@
+# [1.7.0](https://github.com/Wilfreno/hanapbh/compare/v1.6.0...v1.7.0) (2024-09-12)
+
+
+### Bug Fixes
+
+*  property page go back button not displaying right ([11a870e](https://github.com/Wilfreno/hanapbh/commit/11a870e9ff1f6b274130100483ccf0825c017d5b))
+* create room photo route wrong type ([fd09d20](https://github.com/Wilfreno/hanapbh/commit/fd09d205ffdfb2a37096a16a4c08f651e6a0590d))
+
+
+### Features
+
+* create property review api route ([c77800b](https://github.com/Wilfreno/hanapbh/commit/c77800b9779849a292b33a8617d53456e76a746e))
+* insert google places api for default data provider for property get nearby api ([8bb3f71](https://github.com/Wilfreno/hanapbh/commit/8bb3f71648573cae5a24671bdb8b3ea1821ec538))
+* remove redux and use react-query as default state manager ([04f6135](https://github.com/Wilfreno/hanapbh/commit/04f613525e44c69ff50c02b53bab7e0db94cda77))
+
 # [1.6.0](https://github.com/Wilfreno/hanapbh/compare/v1.5.0...v1.6.0) (2024-08-22)
 
 
