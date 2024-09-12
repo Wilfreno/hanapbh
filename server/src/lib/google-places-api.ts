@@ -55,6 +55,8 @@ export async function getNearbyProperty({
     const places_api_response_json =
       (await places_api_response.json()) as GooglePlacesAPINearbyResponse;
 
+    if (places_api_response_json.status !== "OK")
+      throw new Error(places_api_response_json.status);
     let next_page_token = places_api_response_json.next_page_token;
 
     let result = [] as (Omit<

@@ -1,4 +1,5 @@
 export type GooglePlacesAPINearbyResponse = {
+  status: string;
   next_page_token: string;
   results: [
     {
